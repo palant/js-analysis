@@ -7,6 +7,7 @@
 "use strict";
 
 import fs from "fs";
+import path from "path";
 
 import escodegen from "escodegen";
 import escope from "escope";
@@ -51,9 +52,20 @@ function renameScope(scope, names=new Set())
     renameScope(child, names);
 }
 
-export function beautifyVariables(ast, scopeManager=escope.analyze(ast))
+function ensureParentDirExists(filepath)
 {
-  renameScope(scopeManager.acquire(ast));
+  let dir = path.dirname(filepath);
+  if (!dir || dir == ".")
+    return;
+
+  ensureParentDirExists(dir);
+  if (!fs.existsSync(dir))
+    fs.mkdirSync(dir);
+}
+
+export function beautifyVariables(ast, scope=escope.analyze(ast).acquire(ast))
+{
+  renameScope(scope);
 }
 
 export function readScript(filepath)
@@ -64,6 +76,7 @@ export function readScript(filepath)
 
 export function saveScript(ast, filepath)
 {
+  ensureParentDirExists(filepath);
   fs.writeFileSync(filepath, escodegen.generate(ast, {
     format: {
       indent: {
