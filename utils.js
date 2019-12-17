@@ -144,12 +144,18 @@ export function rewriteCode(ast)
     },
     leave(node, parent)
     {
-      if (node.type == "Program")
+      if (node.type == "Program" && parent.type != "BlockStatement" && parent.type != "Program")
+        node.type = "BlockStatement";
+      if (node.type == "BlockStatement" || node.type == "Program")
       {
-        if (parent.type == "BlockStatement" || parent.type == "Program")
-          parent.body.splice(parent.body.indexOf(node), 1, ...node.body);
-        else if (node != parent)
-          node.type = "BlockStatement";
+        for (let i = 0; i < node.body.length; i++)
+        {
+          if (node.body[i].type == "Program")
+          {
+            node.body.splice(i, 1, ...node.body[i].body);
+            i--;
+          }
+        }
       }
     }
   });
