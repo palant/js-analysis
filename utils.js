@@ -16,7 +16,7 @@ import phonetic from "phonetic";
 
 function renameVariable(variable, names)
 {
-  if (variable.name.length >= 4)
+  if (variable.keepName)
     return;
 
   let options = {

@@ -83,7 +83,7 @@ function* nameIterator(moduleIds)
 
 function renameVariable(variable, newName)
 {
-  variable.name = newName;
+  variable.keepName = true;
   for (let identifier of variable.identifiers)
     identifier.name = newName;
   for (let reference of variable.references)
