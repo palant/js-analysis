@@ -13,7 +13,11 @@ import escodegen from "escodegen";
 import escope from "escope";
 import esprima from "esprima";
 import estraverse from "estraverse";
+import beautify from "js-beautify";
 import phonetic from "phonetic";
+
+const optionalBrackets = new Set(["IfStatement", "ForStatement", "ForInStatement", "ForOfStatement", "WhileStatement", "DoWhileStatement", "WithStatement"]);
+const trivialStatements = new Set(["EmptyStatement", "BlockStatement", "ExpressionStatement", "ReturnStatement", "ThrowStatement"]);
 
 function renameVariable(variable, names)
 {
@@ -62,6 +66,20 @@ function ensureParentDirExists(filepath)
   ensureParentDirExists(dir);
   if (!fs.existsSync(dir))
     fs.mkdirSync(dir);
+}
+
+function ensureWrapping(node, prop)
+{
+  if (!node[prop])
+    return;
+
+  if (!trivialStatements.has(node[prop].type))
+  {
+    node[prop] = {
+      type: "BlockStatement",
+      body: [node[prop]]
+    };
+  }
 }
 
 export function beautifyVariables(ast, scope=escope.analyze(ast).acquire(ast))
@@ -165,6 +183,13 @@ export function rewriteCode(ast)
           }
         }
       }
+      else if (optionalBrackets.has(node.type))
+      {
+        ensureWrapping(node, "body");
+        ensureWrapping(node, "consequent");
+        if (node.alternate && node.alternate.type != "IfStatement")
+          ensureWrapping(node, "alternate");
+      }
     }
   });
 }
@@ -177,14 +202,17 @@ export function readScript(filepath)
 
 export function saveScript(ast, filepath)
 {
-  ensureParentDirExists(filepath);
-  fs.writeFileSync(filepath, escodegen.generate(ast, {
+  let code = escodegen.generate(ast, {
     format: {
-      indent: {
-        style: "  "
-      },
       quotes: "double"
     },
     comment: true
-  }), {encoding: "utf-8"});
+  });
+  code = beautify.js(code, {
+    indent_size: 2,
+    brace_style: "expand,preserve-inline"
+  });
+
+  ensureParentDirExists(filepath);
+  fs.writeFileSync(filepath, code, {encoding: "utf-8"});
 }

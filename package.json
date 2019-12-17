@@ -13,6 +13,7 @@
     "escope": "^3.6.0",
     "esprima": "^4.0.1",
     "estraverse": "^4.3.0",
+    "js-beautify": "^1.10.2",
     "phonetic": "^0.1.1"
   }
 }
