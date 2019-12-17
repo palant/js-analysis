@@ -8,12 +8,13 @@
 
 "use strict";
 
-import {beautifyVariables, readScript, saveScript} from "./utils.js";
+import {beautifyVariables, rewriteCode, readScript, saveScript} from "./utils.js";
 
 function beautify(script)
 {
   let ast = readScript(script);
   beautifyVariables(ast);
+  rewriteCode(ast);
   saveScript(ast, script);
 }
 

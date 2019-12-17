@@ -12,7 +12,7 @@ import path from "path";
 
 import escope from "escope";
 
-import {beautifyVariables, readScript, saveScript} from "./utils.js";
+import {beautifyVariables, rewriteCode, readScript, saveScript} from "./utils.js";
 
 if (process.argv.length != 4)
 {
@@ -197,5 +197,6 @@ for (let [id, name] of moduleNames.entries())
   if (ast.type == "BlockStatement")
     ast.type = "Program";
   beautifyVariables(ast, scope);
+  rewriteCode(ast);
   saveScript(ast, name);
 }

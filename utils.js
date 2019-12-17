@@ -12,6 +12,7 @@ import path from "path";
 import escodegen from "escodegen";
 import escope from "escope";
 import esprima from "esprima";
+import estraverse from "estraverse";
 import phonetic from "phonetic";
 
 function renameVariable(variable, names)
@@ -66,6 +67,92 @@ function ensureParentDirExists(filepath)
 export function beautifyVariables(ast, scope=escope.analyze(ast).acquire(ast))
 {
   renameScope(scope);
+}
+
+export function rewriteCode(ast)
+{
+  estraverse.replace(ast, {
+    enter(node)
+    {
+      if (node.type == "UnaryExpression" && node.operator == "!" && node.argument.type == "Literal")
+      {
+        // !0 => true, !1 => false
+        return {
+          type: "Literal",
+          value: !node.argument.value
+        };
+      }
+      else if (node.type == "ExpressionStatement" && node.expression.type == "ConditionalExpression")
+      {
+        // a ? b : c => if (a) b; else c;
+        return {
+          type: "IfStatement",
+          test: node.expression.test,
+          consequent: {
+            type: "ExpressionStatement",
+            expression: node.expression.consequent
+          },
+          alternate: {
+            type: "ExpressionStatement",
+            expression: node.expression.alternate
+          }
+        };
+      }
+      else if (node.type == "ExpressionStatement" && node.expression.type == "LogicalExpression" && node.expression.operator == "&&")
+      {
+        // a && b => if (a) b;
+        return {
+          type: "IfStatement",
+          test: node.expression.left,
+          consequent: {
+            type: "ExpressionStatement",
+            expression: node.expression.right
+          }
+        };
+      }
+      else if (node.type == "ExpressionStatement" && node.expression.type == "LogicalExpression" && node.expression.operator == "||")
+      {
+        // a || b => if (!a) b;
+        return {
+          type: "IfStatement",
+          test: {
+            type: "UnaryExpression",
+            operator: "!",
+            prefix: true,
+            argument: node.expression.left
+          },
+          consequent: {
+            type: "ExpressionStatement",
+            expression: node.expression.right
+          }
+        };
+      }
+      else if (node.type == "ExpressionStatement" && node.expression.type == "SequenceExpression")
+      {
+        // a, b, c => a; b; c;
+        return {
+          type: "Program",
+          body: node.expression.expressions.map(expression =>
+          {
+            return {
+              type: "ExpressionStatement",
+              expression
+            }
+          })
+        };
+      }
+    },
+    leave(node, parent)
+    {
+      if (node.type == "Program")
+      {
+        if (parent.type == "BlockStatement" || parent.type == "Program")
+          parent.body.splice(parent.body.indexOf(node), 1, ...node.body);
+        else if (node != parent)
+          node.type = "BlockStatement";
+      }
+    }
+  });
 }
 
 export function readScript(filepath)
