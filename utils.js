@@ -19,7 +19,13 @@ import phonetic from "phonetic";
 const optionalBrackets = new Set(["IfStatement", "ForStatement", "ForInStatement", "ForOfStatement", "WhileStatement", "DoWhileStatement", "WithStatement"]);
 const trivialStatements = new Set(["EmptyStatement", "BlockStatement", "ExpressionStatement", "ReturnStatement", "ThrowStatement"]);
 
-const patterns = [
+const rewritePatterns = [
+  [`!1`, `false`],
+  [`!0`, `true`],
+  [`void 0`, `undefined`],
+  [`expression1 && expression2;`, `if (expression1) expression2;`],
+  [`expression1 || expression2;`, `if (!expression1) expression2;`],
+  [`expression1 ? expression2 : expression3;`, `if (expression1) expression2; else expression3;`],
   [`
     function placeholder1(placeholder2)
     {
@@ -41,36 +47,46 @@ function compilePattern(code)
 {
   let pattern = esprima.parse(code);
   if (pattern.type == "Program" && pattern.body.length == 1)
-    return pattern.body[0];
+    pattern = pattern.body[0];
+  if (pattern.type == "ExpressionStatement" && !/;\s*$/.test(code))
+    pattern = pattern.expression;
   return pattern;
 }
 
-function matchesPattern(ast, pattern, placeholders = {})
+function matchesPattern(node, pattern, placeholders = {})
 {
+  if (pattern.type == "Identifier" && /^expression\d+$/.test(pattern.name))
+  {
+    if (!/Expression$/.test(node.type))
+      return null;
+    placeholders[pattern.name] = node;
+    return placeholders;
+  }
+
   for (let key of Object.keys(pattern))
   {
-    if (!ast.hasOwnProperty(key) || typeof pattern[key] != typeof ast[key])
+    if (!node.hasOwnProperty(key) || typeof pattern[key] != typeof node[key])
       return null;
     if (pattern[key] && typeof pattern[key] == "object")
     {
       if (Array.isArray(pattern[key]))
       {
-        if (pattern[key].length != ast[key].length)
+        if (pattern[key].length != node[key].length)
           return null;
         for (let i = 0; i < pattern[key].length; i++)
-          if (!matchesPattern(ast[key][i], pattern[key][i], placeholders))
+          if (!matchesPattern(node[key][i], pattern[key][i], placeholders))
             return null;
       }
-      else if (!matchesPattern(ast[key], pattern[key], placeholders))
+      else if (!matchesPattern(node[key], pattern[key], placeholders))
         return null;
     }
     else if (typeof pattern[key] == "string" && /^placeholder\d+$/.test(pattern[key]))
     {
-      if (placeholders.hasOwnProperty(pattern[key]) && placeholders[pattern[key]] != ast[key])
+      if (placeholders.hasOwnProperty(pattern[key]) && placeholders[pattern[key]] != node[key])
         return null;
-      placeholders[pattern[key]] = ast[key];
+      placeholders[pattern[key]] = node[key];
     }
-    else if (pattern[key] != ast[key])
+    else if (pattern[key] != node[key])
       return null;
   }
   return placeholders;
@@ -78,6 +94,9 @@ function matchesPattern(ast, pattern, placeholders = {})
 
 function fillPattern(pattern, placeholders)
 {
+  if (pattern.type == "Identifier" && /^expression\d+$/.test(pattern.name))
+    return placeholders[pattern.name];
+
   let result = {};
   for (let key of Object.keys(pattern))
   {
@@ -188,68 +207,7 @@ export function rewriteCode(ast)
   estraverse.replace(ast, {
     enter(node)
     {
-      if (node.type == "UnaryExpression" && node.operator == "!" && node.argument.type == "Literal")
-      {
-        // !0 => true, !1 => false
-        return {
-          type: "Literal",
-          value: !node.argument.value
-        };
-      }
-      else if (node.type == "UnaryExpression" && node.operator == "void" && node.argument.type == "Literal")
-      {
-        // void 0 => undefined
-        return {
-          type: "Identifier",
-          name: "undefined"
-        };
-      }
-      else if (node.type == "ExpressionStatement" && node.expression.type == "ConditionalExpression")
-      {
-        // a ? b : c => if (a) b; else c;
-        return {
-          type: "IfStatement",
-          test: node.expression.test,
-          consequent: {
-            type: "ExpressionStatement",
-            expression: node.expression.consequent
-          },
-          alternate: {
-            type: "ExpressionStatement",
-            expression: node.expression.alternate
-          }
-        };
-      }
-      else if (node.type == "ExpressionStatement" && node.expression.type == "LogicalExpression" && node.expression.operator == "&&")
-      {
-        // a && b => if (a) b;
-        return {
-          type: "IfStatement",
-          test: node.expression.left,
-          consequent: {
-            type: "ExpressionStatement",
-            expression: node.expression.right
-          }
-        };
-      }
-      else if (node.type == "ExpressionStatement" && node.expression.type == "LogicalExpression" && node.expression.operator == "||")
-      {
-        // a || b => if (!a) b;
-        return {
-          type: "IfStatement",
-          test: {
-            type: "UnaryExpression",
-            operator: "!",
-            prefix: true,
-            argument: node.expression.left
-          },
-          consequent: {
-            type: "ExpressionStatement",
-            expression: node.expression.right
-          }
-        };
-      }
-      else if (node.type == "ExpressionStatement" && node.expression.type == "SequenceExpression")
+      if (node.type == "ExpressionStatement" && node.expression.type == "SequenceExpression")
       {
         // a, b, c => a; b; c;
         return {
@@ -265,7 +223,7 @@ export function rewriteCode(ast)
       }
       else
       {
-        for (let [pattern, replacement] of patterns)
+        for (let [pattern, replacement] of rewritePatterns)
         {
           let placeholders = matchesPattern(node, pattern);
           if (!placeholders)
