@@ -82,6 +82,14 @@ export function rewriteCode(ast)
           value: !node.argument.value
         };
       }
+      else if (node.type == "UnaryExpression" && node.operator == "void" && node.argument.type == "Literal")
+      {
+        // void 0 => undefined
+        return {
+          type: "Identifier",
+          name: "undefined"
+        };
+      }
       else if (node.type == "ExpressionStatement" && node.expression.type == "ConditionalExpression")
       {
         // a ? b : c => if (a) b; else c;
