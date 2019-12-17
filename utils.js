@@ -18,14 +18,24 @@ import phonetic from "phonetic";
 
 const optionalBrackets = new Set(["IfStatement", "ForStatement", "ForInStatement", "ForOfStatement", "WhileStatement", "DoWhileStatement", "WithStatement"]);
 const trivialStatements = new Set(["EmptyStatement", "BlockStatement", "ExpressionStatement", "ReturnStatement", "ThrowStatement"]);
-const _interopRequireDefault = compilePattern(`
-  function placeholder1(placeholder2)
-  {
-    return placeholder2 && placeholder2.__esModule
-      ? placeholder2
-      : { default: placeholder2 };
-  }
-`);
+
+const patterns = [
+  [`
+    function placeholder1(placeholder2)
+    {
+      return placeholder2 && placeholder2.__esModule
+        ? placeholder2
+        : { default: placeholder2 };
+    }
+  `, `
+    function _interopRequireDefault(obj)
+    {
+      return obj && obj.__esModule
+        ? obj
+        : { default: obj };
+    }
+  `]
+].map(([pattern, replacement]) => [compilePattern(pattern), compilePattern(replacement)]);
 
 function compilePattern(code)
 {
@@ -253,23 +263,27 @@ export function rewriteCode(ast)
           })
         };
       }
-      else if (node.type == "FunctionDeclaration")
+      else
       {
-        let placeholders = matchesPattern(node, _interopRequireDefault);
-        if (placeholders)
+        for (let [pattern, replacement] of patterns)
         {
-          let scope = scopeManager.acquire(node).upper;
-          let variable = scope.set.get(node.id.name);
-          let newName = "_interopRequireDefault";
-          let i = 1;
-          while (scope.set.has(newName))
-            newName = "_interopRequireDefault" + i;
-          renameVariable(variable, newName);
+          let placeholders = matchesPattern(node, pattern);
+          if (!placeholders)
+            continue;
 
-          return fillPattern(_interopRequireDefault, {
-            placeholder1: newName,
-            placeholder2: "obj"
-          });
+          let result = fillPattern(replacement, placeholders);
+          if (node.type == "FunctionDeclaration" && result.type == "FunctionDeclaration")
+          {
+            let scope = scopeManager.acquire(node).upper;
+            let variable = scope.set.get(node.id.name);
+            let newName = result.id.name;
+            let i = 1;
+            while (scope.set.has(newName))
+              newName = result.id.name + i;
+            result.id.name = newName;
+            renameVariable(variable, newName);
+          }
+          return result;
         }
       }
     },
