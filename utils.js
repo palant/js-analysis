@@ -16,7 +16,6 @@ import estraverse from "estraverse";
 import beautify from "js-beautify";
 import phonetic from "phonetic";
 
-const optionalBrackets = new Set(["IfStatement", "ForStatement", "ForInStatement", "ForOfStatement", "WhileStatement", "DoWhileStatement", "WithStatement"]);
 const trivialStatements = new Set(["EmptyStatement", "BlockStatement", "ExpressionStatement", "ReturnStatement", "ThrowStatement"]);
 
 const rewritePatterns = [
@@ -26,6 +25,12 @@ const rewritePatterns = [
   [`expression1 && expression2;`, `if (expression1) expression2;`],
   [`expression1 || expression2;`, `if (!expression1) expression2;`],
   [`expression1 ? expression2 : expression3;`, `if (expression1) expression2; else expression3;`],
+  [`if (expression1) nonTrivialStatement1;`, `if (expression1) { nonTrivialStatement1; }`],
+  [`while (expression1) nonTrivialStatement1;`, `while (expression1) { nonTrivialStatement1; }`],
+  [`do nonTrivialStatement1; while (expression1);`, `do { nonTrivialStatement1; } while (expression1);`],
+  [`for (expression1; expression2; expression3) nonTrivialStatement1;`, `for (expression1; expression2; expression3) { nonTrivialStatement1; }`],
+  [`for (expression1 in expression2) nonTrivialStatement1;`, `for (expression1 in expression2) { nonTrivialStatement1; }`],
+  [`for (expression1 of expression2) nonTrivialStatement1;`, `for (expression1 of expression2) { nonTrivialStatement1; }`],
   [`
     function placeholder1(placeholder2)
     {
@@ -57,7 +62,14 @@ function matchesPattern(node, pattern, placeholders = {})
 {
   if (pattern.type == "Identifier" && /^expression\d+$/.test(pattern.name))
   {
-    if (!/Expression$/.test(node.type))
+    if (node && node.type != "VariableDeclaration" && !/Expression$/.test(node.type))
+      return null;
+    placeholders[pattern.name] = node;
+    return placeholders;
+  }
+  else if (pattern.type == "ExpressionStatement" && pattern.expression.type == "Identifier" && /^nonTrivialStatement\d+$/.test(pattern.expression.name))
+  {
+    if (trivialStatements.has(node.type))
       return null;
     placeholders[pattern.name] = node;
     return placeholders;
@@ -95,6 +107,8 @@ function matchesPattern(node, pattern, placeholders = {})
 function fillPattern(pattern, placeholders)
 {
   if (pattern.type == "Identifier" && /^expression\d+$/.test(pattern.name))
+    return placeholders[pattern.name];
+  else if (pattern.type == "ExpressionStatement" && pattern.expression.type == "Identifier" && /^nonTrivialStatement\d+$/.test(pattern.expression.name))
     return placeholders[pattern.name];
 
   let result = {};
@@ -259,13 +273,6 @@ export function rewriteCode(ast)
             i--;
           }
         }
-      }
-      else if (optionalBrackets.has(node.type))
-      {
-        ensureWrapping(node, "body");
-        ensureWrapping(node, "consequent");
-        if (node.alternate && node.alternate.type != "IfStatement")
-          ensureWrapping(node, "alternate");
       }
     }
   });
