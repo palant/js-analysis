@@ -12,7 +12,7 @@ import path from "path";
 
 import escope from "escope";
 
-import {beautifyVariables, rewriteCode, readScript, saveScript} from "./utils.js";
+import {renameVariable, beautifyVariables, rewriteCode, readScript, saveScript} from "./utils.js";
 
 if (process.argv.length != 4)
 {
@@ -79,15 +79,6 @@ function* nameIterator(moduleIds)
       yield [id, key, value];
     }
   }
-}
-
-function renameVariable(variable, newName)
-{
-  variable.keepName = true;
-  for (let identifier of variable.identifiers)
-    identifier.name = newName;
-  for (let reference of variable.references)
-    reference.identifier.name = newName;
 }
 
 let ast = readScript(process.argv[2]);

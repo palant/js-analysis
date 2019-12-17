@@ -18,8 +18,79 @@ import phonetic from "phonetic";
 
 const optionalBrackets = new Set(["IfStatement", "ForStatement", "ForInStatement", "ForOfStatement", "WhileStatement", "DoWhileStatement", "WithStatement"]);
 const trivialStatements = new Set(["EmptyStatement", "BlockStatement", "ExpressionStatement", "ReturnStatement", "ThrowStatement"]);
+const _interopRequireDefault = compilePattern(`
+  function placeholder1(placeholder2)
+  {
+    return placeholder2 && placeholder2.__esModule
+      ? placeholder2
+      : { default: placeholder2 };
+  }
+`);
 
-function renameVariable(variable, names)
+function compilePattern(code)
+{
+  let pattern = esprima.parse(code);
+  if (pattern.type == "Program" && pattern.body.length == 1)
+    return pattern.body[0];
+  return pattern;
+}
+
+function matchesPattern(ast, pattern, placeholders = {})
+{
+  for (let key of Object.keys(pattern))
+  {
+    if (!ast.hasOwnProperty(key) || typeof pattern[key] != typeof ast[key])
+      return null;
+    if (pattern[key] && typeof pattern[key] == "object")
+    {
+      if (Array.isArray(pattern[key]))
+      {
+        if (pattern[key].length != ast[key].length)
+          return null;
+        for (let i = 0; i < pattern[key].length; i++)
+          if (!matchesPattern(ast[key][i], pattern[key][i], placeholders))
+            return null;
+      }
+      else if (!matchesPattern(ast[key], pattern[key], placeholders))
+        return null;
+    }
+    else if (typeof pattern[key] == "string" && /^placeholder\d+$/.test(pattern[key]))
+    {
+      if (placeholders.hasOwnProperty(pattern[key]) && placeholders[pattern[key]] != ast[key])
+        return null;
+      placeholders[pattern[key]] = ast[key];
+    }
+    else if (pattern[key] != ast[key])
+      return null;
+  }
+  return placeholders;
+}
+
+function fillPattern(pattern, placeholders)
+{
+  let result = {};
+  for (let key of Object.keys(pattern))
+  {
+    if (pattern[key] && typeof pattern[key] == "object")
+    {
+      if (Array.isArray(pattern[key]))
+      {
+        result[key] = [];
+        for (let item of pattern[key])
+          result[key].push(fillPattern(item, placeholders));
+      }
+      else
+        result[key] = fillPattern(pattern[key], placeholders);
+    }
+    else if (typeof pattern[key] == "string" && /^placeholder\d+$/.test(pattern[key]))
+      result[key] = placeholders[pattern[key]];
+    else
+      result[key] = pattern[key];
+  }
+  return result;
+}
+
+function beautifyVariable(variable, names)
 {
   if (variable.keepName)
     return;
@@ -38,23 +109,20 @@ function renameVariable(variable, names)
       options.syllables++;
   } while (names.has(name));
 
-  for (let identifier of variable.identifiers)
-    identifier.name = name;
-  for (let reference of variable.references)
-    reference.identifier.name = name;
+  renameVariable(variable, name);
 
   names._seed = options.seed;
   names._syllables = options.syllables;
   names.add(name);
 }
 
-function renameScope(scope, names=new Set())
+function beautifyScope(scope, names=new Set())
 {
   for (let variable of scope.variables)
-    renameVariable(variable, names);
+    beautifyVariable(variable, names);
 
   for (let child of scope.childScopes)
-    renameScope(child, names);
+    beautifyScope(child, names);
 }
 
 function ensureParentDirExists(filepath)
@@ -82,13 +150,31 @@ function ensureWrapping(node, prop)
   }
 }
 
+export function renameVariable(variable, newName)
+{
+  variable.keepName = true;
+  for (let identifier of variable.identifiers)
+    identifier.name = newName;
+  for (let reference of variable.references)
+    reference.identifier.name = newName;
+
+  // Functions called before declaration will not be listed under variable.references
+  for (let reference of variable.scope.references)
+    if (reference.identifier.name == variable.name)
+      reference.identifier.name = newName;
+
+  variable.name = newName;
+}
+
 export function beautifyVariables(ast, scope=escope.analyze(ast).acquire(ast))
 {
-  renameScope(scope);
+  beautifyScope(scope);
 }
 
 export function rewriteCode(ast)
 {
+  let scopeManager = escope.analyze(ast);
+
   estraverse.replace(ast, {
     enter(node)
     {
@@ -166,6 +252,25 @@ export function rewriteCode(ast)
             }
           })
         };
+      }
+      else if (node.type == "FunctionDeclaration")
+      {
+        let placeholders = matchesPattern(node, _interopRequireDefault);
+        if (placeholders)
+        {
+          let scope = scopeManager.acquire(node).upper;
+          let variable = scope.set.get(node.id.name);
+          let newName = "_interopRequireDefault";
+          let i = 1;
+          while (scope.set.has(newName))
+            newName = "_interopRequireDefault" + i;
+          renameVariable(variable, newName);
+
+          return fillPattern(_interopRequireDefault, {
+            placeholder1: newName,
+            placeholder2: "obj"
+          });
+        }
       }
     },
     leave(node, parent)
