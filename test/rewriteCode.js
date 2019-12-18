@@ -43,7 +43,8 @@ describe("rewriteCode()", () =>
     let ast = esprima.parse(`
       exists(x) && doSomething(x),
       missing(y) ? doSomething(y) : doSomething(0),
-      exists(z) || exists(y) && doSomething(x + y);
+      exists(z) || exists(y) && doSomething(x + y),
+      x += y;
     `);
     rewriteCode(ast);
     expect(ast).to.be.deep.equal(esprima.parse(`
@@ -56,6 +57,7 @@ describe("rewriteCode()", () =>
       if (!exists(z))
         if (exists(y))
           doSomething(x + y);
+      x += y;
     `));
   });
 
