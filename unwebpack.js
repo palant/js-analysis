@@ -13,6 +13,7 @@ import path from "path";
 import escope from "escope";
 
 import {readScript, saveScript} from "./lib/io.js";
+import * as patterns from "./lib/patterns.js";
 import {renameVariable, beautifyVariables} from "./lib/renameVariables.js";
 import rewriteCode from "./lib/rewriteCode.js";
 
@@ -22,44 +23,20 @@ if (process.argv.length != 4)
   process.exit(1);
 }
 
-function expectType(ast, type, next, index)
+function* objectIterator(node)
 {
-  if (Array.isArray(type))
-  {
-    if (!type.includes(ast.type))
-      throw new Error(`Expected one of ${type.join(", ")}, got ${ast.type}`);
-  }
-  else if (ast.type != type)
-    throw new Error(`Expected ${type}, got ${ast.type}`);
+  if (node.type != "ObjectExpression")
+    throw new Error(`Object expected, got ${type}`);
 
-  if (Array.isArray(next))
+  for (let property of node.properties)
   {
-    for (let entry of next)
-    {
-      if (entry in ast)
-      {
-        next = entry;
-        break;
-      }
-    }
-  }
-
-  let result = ast[next];
-  if (!result)
-    throw new Error(`Expected ${type}.${next} to be set`);
-
-  if (typeof index == "number")
-  {
-    if (Array.isArray(result))
-    {
-      if (index >= result.length)
-        throw new Error(`Expected ${type}.${next} to have at least ${index + 1} entries, got ${result.length}`);
-      result = result[index];
-    }
+    if (property.key.type == "Identifier")
+      yield [property.key.name, property.value];
+    else if (property.key.type == "Literal")
+      yield [property.key.value, property.value];
     else
-      throw new Error(`Expected ${type}.${next} to be an array`);
+      throw new Error(`Literal or identifier property name expected, got ${property.key.type}`);
   }
-  return result;
 }
 
 function* nameIterator(moduleIds)
@@ -70,41 +47,57 @@ function* nameIterator(moduleIds)
     if (!names)
       continue;
 
-    names = expectType(names, "ObjectExpression", "properties");
-    for (let name of names)
+    for (let [key, value] of objectIterator(names))
     {
-      let key = expectType(name, "Property", "key");
-      key = expectType(key, ["Identifier", "Literal"], ["name", "value"]);
-
-      let value = expectType(name, "Property", "value");
-      value = expectType(value, "Literal", "value");
-      yield [id, key, value];
+      if (value.type != "Literal")
+        throw new Error(`Expected module reference to be a literal, got ${value.type}`);
+      yield [id, key, value.value];
     }
   }
 }
 
 let ast = readScript(process.argv[2]);
-ast = expectType(ast, "Program", "body", 0);
-ast = expectType(ast, "ExpressionStatement", "expression");
-ast = expectType(ast, ["UnaryExpression", "AssignmentExpression"], ["argument", "right"]);
-let [modules, , entry] = expectType(ast, "CallExpression", "arguments");
-
-modules = expectType(modules, "ObjectExpression", "properties");
-let moduleIds = new Map();
-for (let module of modules)
+let placeholders = patterns.matches(`
+  !function()
+  {
+    statement1.repeatable.optional;
+  }()(expression1, expression2, expression3);
+  statement2.repeatable.optional;
+`, ast);
+if (!placeholders)
 {
-  let key = expectType(module, "Property", "key");
-  key = expectType(key, ["Identifier", "Literal"], ["name", "value"]);
+  placeholders = patterns.matches(`
+    expression0 = function()
+    {
+      statement1.repeatable.optional;
+    }()(expression1, expression2, expression3);
+    statement2.repeatable.optional;
+  `, ast);
+}
+if (!placeholders)
+{
+  console.error("This file doesn't appear to have the expected format.");
+  process.exit(1);
+}
+let {expression1: modules, expression3: entry} = placeholders;
 
-  let value = expectType(module, "Property", "value");
-  value = expectType(value, "ArrayExpression", "elements");
-  moduleIds.set(key, value);
+let moduleIds = new Map();
+for (let [key, value] of objectIterator(modules))
+{
+  let placeholders = patterns.matches(`[expression1, expression2]`, value);
+  if (!placeholders)
+    throw new Error("Module entry is not a two elements array");
+  moduleIds.set(key, [placeholders.expression1, placeholders.expression2]);
 }
 
 let moduleNames = new Map();
-entry = expectType(entry, "ArrayExpression", "elements");
-if (entry.length == 1)
-  moduleNames.set(expectType(entry[0], "Literal", "value"), "/main");
+
+placeholders = patterns.matches(`[expression1.repeatable.optional]`, entry);
+if (!placeholders)
+  throw new Error("Entry points are not an array");
+entry = placeholders.expression1;
+if (entry.length == 1 && entry[0].type == "Literal")
+  moduleNames.set(entry[0].value, "/main");
 
 let absoluteNames = new Set();
 for (let [parent, name, id] of nameIterator(moduleIds))
@@ -177,19 +170,24 @@ for (let [id, name] of moduleNames.entries())
   if (path.relative(targetDir, name).startsWith(".." + path.sep))
     throw new Error(`Unexpected module output path outside of target directory: ${name}`);
 
-  let [ast] = moduleIds.get(id);
-  let scopeManager = escope.analyze(ast, {ecmaVersion: 6});
-  let scope = scopeManager.acquire(ast);
-  if (scope.variables.length < 4 || scope.variables[0].name != "arguments")
-    throw new Error("Unexpected module scope");
-  renameVariable(scope.variables[1], "require");
-  renameVariable(scope.variables[2], "module");
-  renameVariable(scope.variables[3], "exports");
+  let [node] = moduleIds.get(id);
+  let scopeManager = escope.analyze(node, {ecmaVersion: 6});
+  let scope = scopeManager.acquire(node);
+  let placeholders = patterns.matches(`
+    (function(placeholder1, placeholder2, placeholder3)
+    {
+      statement1.repeatable.optional;
+    })`, node);
+  if (!placeholders)
+    throw new Error("Module code doesn't have the expected format");
+  renameVariable(scope.set.get(placeholders.placeholder1), "require");
+  renameVariable(scope.set.get(placeholders.placeholder2), "module");
+  renameVariable(scope.set.get(placeholders.placeholder3), "exports");
 
-  ast = expectType(ast, "FunctionExpression", "body");
-  if (ast.type == "BlockStatement")
-    ast.type = "Program";
-  beautifyVariables(ast, scope);
-  rewriteCode(ast);
-  saveScript(ast, name);
+  node = node.body;
+  if (node.type == "BlockStatement")
+    node.type = "Program";
+  beautifyVariables(node, scope);
+  rewriteCode(node);
+  saveScript(node, name);
 }

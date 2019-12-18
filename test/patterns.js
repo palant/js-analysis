@@ -119,16 +119,21 @@ describe("pattern.matches()", () =>
 
   it("should accept statement placeholders in code", () =>
   {
-    expect(patterns.matches(`function sum(a,b){statement1;statement2;}`, parseStatement(`
+    expect(patterns.matches(`function sum(a,b){statement1;statement2;statement3;}`, parseStatement(`
       function sum(a, b)
       {
+        function inner(x)
+        {
+          return x;
+        }
         var result = a + b;
         if (result)
           print(result);
       }
     `))).to.be.deep.equal({
-      statement1: parseStatement(`var result = a + b;`),
-      statement2: parseStatement(`if (result) print(result);`)
+      statement1: parseStatement(`function inner(x) {return x;}`),
+      statement2: parseStatement(`var result = a + b;`),
+      statement3: parseStatement(`if (result) print(result);`)
     });
 
     expect(patterns.matches(`function sum(a,b){statement1;statement1;}`, parseStatement(`
