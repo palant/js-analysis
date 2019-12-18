@@ -23,13 +23,13 @@ if (process.argv.length != 4)
   process.exit(1);
 }
 
-const identifierPattern = patterns.compile(`expression1.identifier`);
-const literalPattern = patterns.compile(`expression1.literal`);
+const identifierPattern = patterns.compile("expression1.identifier");
+const literalPattern = patterns.compile("expression1.literal");
 
 function* objectIterator(node)
 {
   if (node.type != "ObjectExpression")
-    throw new Error(`Object expected, got ${type}`);
+    throw new Error(`Object expected, got ${node.type}`);
 
   for (let property of node.properties)
   {
@@ -42,7 +42,7 @@ function* objectIterator(node)
       if (placeholders)
         yield [placeholders.expression1.value, property.value];
       else
-        throw new Error(`Literal or identifier property name expected`);
+        throw new Error("Literal or identifier property name expected");
     }
   }
 }
@@ -59,7 +59,7 @@ function* nameIterator(moduleIds)
     {
       let placeholders = patterns.matches(literalPattern, value);
       if (!placeholders)
-        throw new Error(`Expected module reference to be a literal expression`);
+        throw new Error("Expected module reference to be a literal expression");
       yield [id, key, placeholders.expression1.value];
     }
   }
@@ -93,7 +93,7 @@ let {expression1: modules, expression3: entry} = placeholders;
 let moduleIds = new Map();
 for (let [key, value] of objectIterator(modules))
 {
-  let placeholders = patterns.matches(`[expression1, expression2]`, value);
+  let placeholders = patterns.matches("[expression1, expression2]", value);
   if (!placeholders)
     throw new Error("Module entry is not a two elements array");
   moduleIds.set(key, [placeholders.expression1, placeholders.expression2]);
@@ -101,7 +101,7 @@ for (let [key, value] of objectIterator(modules))
 
 let moduleNames = new Map();
 
-placeholders = patterns.matches(`[expression1.literal.repeatable.optional]`, entry);
+placeholders = patterns.matches("[expression1.literal.repeatable.optional]", entry);
 if (!placeholders)
   throw new Error("Entry points are not an array");
 entry = placeholders.expression1;
@@ -137,11 +137,11 @@ do
     if (absoluteNames.has(id) || !moduleNames.has(parent))
       continue;
 
-    name = moduleNames.get(parent).replace(/[^\/]+$/, "") + name;
+    name = moduleNames.get(parent).replace(/[^/]+$/, "") + name;
     while (/\/\.\//.test(name))
       name = name.replace(/\/\.\//, "/");
-    while (/[^\/]+\/\.\.\//.test(name))
-      name = name.replace(/[^\/]+\/\.\.\//, "");
+    while (/[^/]+\/\.\.\//.test(name))
+      name = name.replace(/[^/]+\/\.\.\//, "");
     name = name.replace(/(?:\/\.\.)+\//, "/");
     name = name.replace(/\/+$/, "");
 

@@ -18,9 +18,10 @@
   },
   "devDependencies": {
     "chai": "^4.2.0",
+    "eslint": "^6.7.2",
     "mocha": "^6.2.2"
   },
   "scripts": {
-    "test": "node test.js"
+    "test": "eslint beautify.js unwebpack.js lib test && node test.js"
   }
 }
