@@ -8,23 +8,37 @@
 
 "use strict";
 
+import commander from "commander";
+
 import {readScript, saveScript} from "./lib/io.js";
 import {beautifyVariables} from "./lib/renameVariables.js";
 import rewriteCode from "./lib/rewriteCode.js";
 
-function beautify(script)
+function beautify(script, options)
 {
   let ast = readScript(script);
-  beautifyVariables(ast);
-  rewriteCode(ast);
+  if (options.mods && options.vars)
+    beautifyVariables(ast);
+  if (options.mods && options.code)
+    rewriteCode(ast);
   saveScript(ast, script);
 }
 
-let scripts = process.argv.slice(2);
-if (!scripts.length)
+commander.arguments("<script> [script...]");
+commander.action((script, moreScripts) =>
 {
-  console.error(`Usage: ${process.argv[1]} <script>...`);
+  commander.scripts = [script].concat(moreScripts);
+});
+commander.option("-n, --no-mods", "Disable all modifications, reformat only");
+commander.option("-c, --no-code", "Disable code rewriting");
+commander.option("-v, --no-vars", "Disable variable name modification");
+commander.parse(process.argv);
+
+if (typeof commander.scripts == "undefined")
+{
+  commander.outputHelp();
   process.exit(1);
 }
-for (let script of scripts)
-  beautify(script);
+
+for (let script of commander.scripts)
+  beautify(script, commander.opts());

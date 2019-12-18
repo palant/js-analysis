@@ -10,18 +10,13 @@
 
 import path from "path";
 
+import commander from "commander";
 import escope from "escope";
 
 import {readScript, saveScript} from "./lib/io.js";
 import * as patterns from "./lib/patterns.js";
 import {renameVariable, beautifyVariables} from "./lib/renameVariables.js";
 import rewriteCode from "./lib/rewriteCode.js";
-
-if (process.argv.length != 4)
-{
-  console.error(`Usage: ${process.argv[1]} <script-file> <output-directory>`);
-  process.exit(1);
-}
 
 const identifierPattern = patterns.compile("expression1.identifier");
 const literalPattern = patterns.compile("expression1.literal");
@@ -65,7 +60,24 @@ function* nameIterator(moduleIds)
   }
 }
 
-let ast = readScript(process.argv[2]);
+commander.arguments("<script> <target-dir>");
+commander.action((script, targetDir) =>
+{
+  commander.script = script;
+  commander.targetDir = targetDir;
+});
+commander.option("-n, --no-mods", "Disable all modifications, reformat only");
+commander.option("-c, --no-code", "Disable code rewriting");
+commander.option("-v, --no-vars", "Disable variable name modification");
+commander.parse(process.argv);
+
+if (typeof commander.script == "undefined" || typeof commander.targetDir == "undefined")
+{
+  commander.outputHelp();
+  process.exit(1);
+}
+
+let ast = readScript(commander.script);
 let placeholders = patterns.matches(`
   !function()
   {
@@ -166,17 +178,16 @@ for (let id of moduleIds.keys())
   if (!moduleNames.has(id))
     console.warn(`Got no name for module ${id}, ignoring the module`);
 
-let targetDir = process.argv[3];
 for (let [id, name] of moduleNames.entries())
 {
   if (!moduleIds.has(id))
     continue;
 
   name = name.replace(/^\/+/, "");
-  name = path.join(targetDir, ...name.split("/"));
+  name = path.join(commander.targetDir, ...name.split("/"));
   if (!path.basename(name).includes("."))
     name += ".js";
-  if (path.relative(targetDir, name).startsWith(".." + path.sep))
+  if (path.relative(commander.targetDir, name).startsWith(".." + path.sep))
     throw new Error(`Unexpected module output path outside of target directory: ${name}`);
 
   let [node] = moduleIds.get(id);
@@ -196,7 +207,9 @@ for (let [id, name] of moduleNames.entries())
   node = node.body;
   if (node.type == "BlockStatement")
     node.type = "Program";
-  beautifyVariables(node, scope);
-  rewriteCode(node);
+  if (commander.mods && commander.vars)
+    beautifyVariables(node, scope);
+  if (commander.mods && commander.code)
+    rewriteCode(node);
   saveScript(node, name);
 }
