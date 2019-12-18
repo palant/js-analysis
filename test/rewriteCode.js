@@ -45,6 +45,10 @@ describe("rewriteCode()", () =>
       missing(y) ? doSomething(y) : doSomething(0),
       exists(z) || exists(y) && doSomething(x + y),
       x += y;
+      function test(x, y)
+      {
+        return x ? x + 1 : y - 2;
+      }
     `);
     rewriteCode(ast);
     expect(ast).to.be.deep.equal(esprima.parse(`
@@ -58,6 +62,13 @@ describe("rewriteCode()", () =>
         if (exists(y))
           doSomething(x + y);
       x += y;
+      function test(x, y)
+      {
+        if (x)
+          return x + 1;
+        else
+          return y - 2;
+      }
     `));
   });
 
@@ -276,7 +287,10 @@ describe("rewriteCode()", () =>
       var c = _interopRequireDefault(require("iterator"));
       function _interopRequireDefault(obj)
       {
-        return obj && obj.__esModule ? obj : { default: obj };
+        if (obj && obj.__esModule)
+          return obj;
+        else
+          return { default: obj };
       }
     `));
   });
