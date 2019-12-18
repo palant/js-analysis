@@ -196,6 +196,58 @@ describe("pattern.matches()", () =>
       ]
     });
 
+    expect(patterns.matches(`{ statement1; statement2; statement3; }`, parseStatement(`
+      {
+        var x = 1;
+        function test() {}
+        x++;
+      }
+    `))).to.be.deep.equal({
+      statement1: parseStatement(`var x = 1;`),
+      statement2: parseStatement(`function test() {}`),
+      statement3: parseStatement(`x++;`)
+    });
+
+    expect(patterns.matches(`{ statement1.variableDeclaration; statement2.functionDeclaration; statement3.strict; }`, parseStatement(`
+      {
+        var x = 1;
+        function test() {}
+        x++;
+      }
+    `))).to.be.deep.equal({
+      statement1: parseStatement(`var x = 1;`),
+      statement2: parseStatement(`function test() {}`),
+      statement3: parseStatement(`x++;`)
+    });
+
+    expect(patterns.matches(`{ statement1.declaration; statement2.declaration; statement3.strict; }`, parseStatement(`
+      {
+        var x = 1;
+        function test() {}
+        x++;
+      }
+    `))).to.be.deep.equal({
+      statement1: parseStatement(`var x = 1;`),
+      statement2: parseStatement(`function test() {}`),
+      statement3: parseStatement(`x++;`)
+    });
+
+    expect(patterns.matches(`statement1.strict;`, parseStatement(`
+      var x = 1;
+    `))).to.be.null;
+
+    expect(patterns.matches(`statement1.declaration;`, parseStatement(`
+      x++;
+    `))).to.be.null;
+
+    expect(patterns.matches(`statement1.variableDeclaration;`, parseStatement(`
+      function test() {}
+    `))).to.be.null;
+
+    expect(patterns.matches(`statement1.functionDeclaration;`, parseStatement(`
+      var x = 1;
+    `))).to.be.null;
+
     expect(patterns.matches(`{ statement1.repeatable; }`, parseStatement(`
       {
       }
@@ -288,6 +340,34 @@ describe("pattern.matches()", () =>
       expression2: parseStatement(`y = 3`).expression,
       expression3: []
     });
+
+    expect(patterns.matches(`expression1, expression2, expression3`, parseStatement(`
+      x + 1, x, 1
+    `).expression)).to.be.deep.equal({
+      expression1: parseStatement(`x + 1`).expression,
+      expression2: parseStatement(`x`).expression,
+      expression3: parseStatement(`1`).expression
+    });
+
+    expect(patterns.matches(`expression1.strict, expression2.identifier, expression3.literal`, parseStatement(`
+      x + 1, x, 1
+    `).expression)).to.be.deep.equal({
+      expression1: parseStatement(`x + 1`).expression,
+      expression2: parseStatement(`x`).expression,
+      expression3: parseStatement(`1`).expression
+    });
+
+    expect(patterns.matches(`expression1.identifier`, parseStatement(`
+      x + 1
+    `).expression)).to.be.deep.null;
+
+    expect(patterns.matches(`expression1.literal`, parseStatement(`
+      x
+    `).expression)).to.be.deep.null;
+
+    expect(patterns.matches(`expression1.strict`, parseStatement(`
+      1
+    `).expression)).to.be.deep.null;
 
     expect(patterns.matches(`for (expression1 of expression2) print()`, parseStatement(`
       for (let a of b)

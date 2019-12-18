@@ -23,6 +23,9 @@ if (process.argv.length != 4)
   process.exit(1);
 }
 
+const identifierPattern = patterns.compile(`expression1.identifier`);
+const literalPattern = patterns.compile(`expression1.literal`);
+
 function* objectIterator(node)
 {
   if (node.type != "ObjectExpression")
@@ -30,12 +33,17 @@ function* objectIterator(node)
 
   for (let property of node.properties)
   {
-    if (property.key.type == "Identifier")
-      yield [property.key.name, property.value];
-    else if (property.key.type == "Literal")
-      yield [property.key.value, property.value];
+    let placeholders = patterns.matches(identifierPattern, property.key);
+    if (placeholders)
+      yield [placeholders.expression1.name, property.value];
     else
-      throw new Error(`Literal or identifier property name expected, got ${property.key.type}`);
+    {
+      placeholders = patterns.matches(literalPattern, property.key);
+      if (placeholders)
+        yield [placeholders.expression1.value, property.value];
+      else
+        throw new Error(`Literal or identifier property name expected`);
+    }
   }
 }
 
@@ -49,9 +57,10 @@ function* nameIterator(moduleIds)
 
     for (let [key, value] of objectIterator(names))
     {
-      if (value.type != "Literal")
-        throw new Error(`Expected module reference to be a literal, got ${value.type}`);
-      yield [id, key, value.value];
+      let placeholders = patterns.matches(literalPattern, value);
+      if (!placeholders)
+        throw new Error(`Expected module reference to be a literal expression`);
+      yield [id, key, placeholders.expression1.value];
     }
   }
 }
@@ -92,11 +101,11 @@ for (let [key, value] of objectIterator(modules))
 
 let moduleNames = new Map();
 
-placeholders = patterns.matches(`[expression1.repeatable.optional]`, entry);
+placeholders = patterns.matches(`[expression1.literal.repeatable.optional]`, entry);
 if (!placeholders)
   throw new Error("Entry points are not an array");
 entry = placeholders.expression1;
-if (entry.length == 1 && entry[0].type == "Literal")
+if (entry.length == 1)
   moduleNames.set(entry[0].value, "/main");
 
 let absoluteNames = new Set();
