@@ -72,6 +72,19 @@ describe("rewriteCode()", () =>
       else
         console.log(x);
 
+      if (!x)
+        ;
+      else
+        for (y in x)
+          console.log(y);
+
+      if (!x)
+        for (x in y)
+          console.log(x);
+      else
+        for (y in x)
+          console.log(y);
+
       while (x)
         if (x)
           x = x.next;
@@ -120,6 +133,25 @@ describe("rewriteCode()", () =>
       }
       else
         console.log(x);
+
+      if (!x)
+        ;
+      else
+      {
+        for (y in x)
+          console.log(y);
+      }
+
+      if (!x)
+      {
+        for (x in y)
+          console.log(x);
+      }
+      else
+      {
+        for (y in x)
+          console.log(y);
+      }
 
       while (x)
       {
