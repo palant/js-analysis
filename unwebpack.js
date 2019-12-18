@@ -12,7 +12,8 @@ import path from "path";
 
 import escope from "escope";
 
-import {renameVariable, beautifyVariables, readScript, saveScript} from "./utils.js";
+import {readScript, saveScript} from "./lib/io.js";
+import {renameVariable, beautifyVariables} from "./lib/renameVariables.js";
 import rewriteCode from "./lib/rewriteCode.js";
 
 if (process.argv.length != 4)
