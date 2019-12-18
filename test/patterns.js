@@ -47,7 +47,9 @@ describe("patterns.compile()", () =>
 
   it("should process statement placeholder modifiers", () =>
   {
+    expect(patterns.compile(`statement12;`).optional).to.be.false;
     expect(patterns.compile(`statement12;`).expectMultiLine).to.be.false;
+    expect(patterns.compile(`statement12.optional;`).optional).to.be.true;
     expect(patterns.compile(`statement12.multiLine;`).expectMultiLine).to.be.true;
   });
 
@@ -63,7 +65,9 @@ describe("patterns.compile()", () =>
 
   it("should process expression placeholder modifiers", () =>
   {
+    expect(patterns.compile(`expression3`).optional).to.be.false;
     expect(patterns.compile(`expression3`).allowDeclarations).to.be.false;
+    expect(patterns.compile(`expression3.optional`).optional).to.be.true;
     expect(patterns.compile(`expression3.orDeclaration`).allowDeclarations).to.be.true;
   });
 
@@ -119,8 +123,8 @@ describe("pattern.matches()", () =>
           print(result);
       }
     `))).to.be.deep.equal({
-      statement1: patterns.compile(`var result = a + b;`),
-      statement2: patterns.compile(`if (result) print(result);`)
+      statement1: parseStatement(`var result = a + b;`),
+      statement2: parseStatement(`if (result) print(result);`)
     });
 
     expect(patterns.matches(`function sum(a,b){statement1;statement1;}`, parseStatement(`
@@ -130,7 +134,7 @@ describe("pattern.matches()", () =>
         var result = a + b;
       }
     `))).to.be.deep.equal({
-      statement1: patterns.compile(`var result = a + b;`)
+      statement1: parseStatement(`var result = a + b;`)
     });
   });
 
@@ -148,13 +152,26 @@ describe("pattern.matches()", () =>
 
   it("should consider statement placeholder modifiers", () =>
   {
+    expect(patterns.matches(`if (x) statement1; else statement2;`, parseStatement(`
+      if (x)
+        x = 2;
+    `))).to.be.null;
+
+    expect(patterns.matches(`if (x) statement1; else statement2.optional;`, parseStatement(`
+      if (x)
+        x = 2;
+    `))).to.be.deep.equal({
+      statement1: parseStatement(`x = 2`),
+      statement2: null
+    });
+
     expect(patterns.matches(`function sum(a,b){statement1;}`, parseStatement(`
       function sum(a, b)
       {
         a = a + b;
       }
     `))).to.be.deep.equal({
-      statement1: patterns.compile(`a = a + b;`),
+      statement1: parseStatement(`a = a + b;`),
     });
 
     expect(patterns.matches(`function sum(a,b){statement1.multiLine;}`, parseStatement(`
@@ -171,7 +188,7 @@ describe("pattern.matches()", () =>
           a = a + b;
       }
     `))).to.be.deep.equal({
-      statement1: patterns.compile(`if (a) a = a + b;`),
+      statement1: parseStatement(`if (a) a = a + b;`),
     });
   });
 
@@ -181,8 +198,8 @@ describe("pattern.matches()", () =>
       for (x in y.prop[2])
         print(x);
     `))).to.be.deep.equal({
-      expression1: patterns.compile(`x`),
-      expression2: patterns.compile(`y.prop[2]`)
+      expression1: parseStatement(`x`).expression,
+      expression2: parseStatement(`y.prop[2]`).expression
     });
   });
 
@@ -196,6 +213,22 @@ describe("pattern.matches()", () =>
 
   it("should consider expression placeholder modifiers", () =>
   {
+    expect(patterns.matches(`function* test() {yield expression1;}`, parseStatement(`
+      function* test()
+      {
+        yield;
+      }
+    `))).to.be.null;
+
+    expect(patterns.matches(`function* test() {yield expression1.optional;}`, parseStatement(`
+      function* test()
+      {
+        yield;
+      }
+    `))).to.be.deep.equal({
+      expression1: null
+    });
+
     expect(patterns.matches(`for (expression1 of expression2) print()`, parseStatement(`
       for (let a of b)
         print();
@@ -205,8 +238,8 @@ describe("pattern.matches()", () =>
       for (let a of b)
         print();
     `))).to.be.deep.equal({
-      expression1: patterns.compile(`let a`),
-      expression2: patterns.compile(`b`)
+      expression1: parseStatement(`let a`),
+      expression2: parseStatement(`b`).expression
     });
   });
 });
