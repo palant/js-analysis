@@ -48,8 +48,10 @@ describe("patterns.compile()", () =>
   it("should process statement placeholder modifiers", () =>
   {
     expect(patterns.compile(`statement12;`).optional).to.be.false;
+    expect(patterns.compile(`statement12;`).repeatable).to.be.false;
     expect(patterns.compile(`statement12;`).expectMultiLine).to.be.false;
     expect(patterns.compile(`statement12.optional;`).optional).to.be.true;
+    expect(patterns.compile(`statement12.repeatable;`).repeatable).to.be.true;
     expect(patterns.compile(`statement12.multiLine;`).expectMultiLine).to.be.true;
   });
 
@@ -66,8 +68,10 @@ describe("patterns.compile()", () =>
   it("should process expression placeholder modifiers", () =>
   {
     expect(patterns.compile(`expression3`).optional).to.be.false;
+    expect(patterns.compile(`expression3`).repeatable).to.be.false;
     expect(patterns.compile(`expression3`).allowDeclarations).to.be.false;
     expect(patterns.compile(`expression3.optional`).optional).to.be.true;
+    expect(patterns.compile(`expression3.repeatable`).repeatable).to.be.true;
     expect(patterns.compile(`expression3.orDeclaration`).allowDeclarations).to.be.true;
   });
 
@@ -165,13 +169,38 @@ describe("pattern.matches()", () =>
       statement2: null
     });
 
-    expect(patterns.matches(`function sum(a,b){statement1;}`, parseStatement(`
-      function sum(a, b)
+    expect(patterns.matches(`{ statement1; }`, parseStatement(`
       {
-        a = a + b;
+        x = 2;
+        y = 3;
+        x += y;
+      }
+    `))).to.be.null;
+
+    expect(patterns.matches(`{ statement1.repeatable; }`, parseStatement(`
+      {
+        x = 2;
+        y = 3;
+        x += y;
       }
     `))).to.be.deep.equal({
-      statement1: parseStatement(`a = a + b;`),
+      statement1: [
+        parseStatement(`x = 2;`),
+        parseStatement(`y = 3;`),
+        parseStatement(`x += y;`)
+      ]
+    });
+
+    expect(patterns.matches(`{ statement1.repeatable; }`, parseStatement(`
+      {
+      }
+    `))).to.be.null;
+
+    expect(patterns.matches(`{ statement1.repeatable.optional; }`, parseStatement(`
+      {
+      }
+    `))).to.be.deep.equal({
+      statement1: []
     });
 
     expect(patterns.matches(`function sum(a,b){statement1.multiLine;}`, parseStatement(`
@@ -227,6 +256,32 @@ describe("pattern.matches()", () =>
       }
     `))).to.be.deep.equal({
       expression1: null
+    });
+
+    expect(patterns.matches(`expression1, expression2`, parseStatement(`
+      x = 2, y = 3, x += y
+    `).expression)).to.be.null;
+
+    expect(patterns.matches(`expression1, expression2.repeatable`, parseStatement(`
+      x = 2, y = 3, x += y
+    `).expression)).to.be.deep.equal({
+      expression1: parseStatement(`x = 2`).expression,
+      expression2: [
+        parseStatement(`y = 3`).expression,
+        parseStatement(`x += y`).expression
+      ]
+    });
+
+    expect(patterns.matches(`expression1, expression2, expression3.repeatable`, parseStatement(`
+      x = 2, y = 3
+    `).expression)).to.be.null;
+
+    expect(patterns.matches(`expression1, expression2, expression3.repeatable.optional`, parseStatement(`
+      x = 2, y = 3
+    `).expression)).to.be.deep.equal({
+      expression1: parseStatement(`x = 2`).expression,
+      expression2: parseStatement(`y = 3`).expression,
+      expression3: []
     });
 
     expect(patterns.matches(`for (expression1 of expression2) print()`, parseStatement(`
@@ -342,5 +397,35 @@ describe("patterns.fill()", () =>
         expression1: parseStatement(`b > 2`).expression
       });
     }).to.throw();
+  });
+
+  it("should fill in multiple statements or expressions when passed an array", () =>
+  {
+    expect(patterns.fill(`
+      function test(expression1)
+      {
+        x, expression1;
+        console.log(expression2, y);
+        statement1;
+      }
+    `, {
+      expression1: [
+        parseStatement(`a`).expression,
+        parseStatement(`b`).expression
+      ],
+      expression2: [],
+      statement1: [
+        parseStatement(`x = 2`),
+        parseStatement(`y = 3`)
+      ]
+    })).to.be.deep.equal(parseStatement(`
+      function test(a, b)
+      {
+        x, a, b;
+        console.log(y);
+        x = 2;
+        y = 3;
+      }
+    `));
   });
 });
