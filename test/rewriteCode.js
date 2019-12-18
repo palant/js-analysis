@@ -260,4 +260,22 @@ describe("rewriteCode()", () =>
       }
     `));
   });
+
+  it("should recognize known functions", () =>
+  {
+    let ast = esprima.parse(`
+      var b = a(require("core"));
+      var c = a(require("iterator"));
+      function a(e){return e&&e.__esModule?e:{default:e}}
+    `);
+    rewriteCode(ast);
+    expect(ast).to.be.deep.equal(esprima.parse(`
+      var b = _interopRequireDefault(require("core"));
+      var c = _interopRequireDefault(require("iterator"));
+      function _interopRequireDefault(obj)
+      {
+        return obj && obj.__esModule ? obj : { default: obj };
+      }
+    `));
+  });
 });
