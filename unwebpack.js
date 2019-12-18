@@ -178,7 +178,7 @@ for (let [id, name] of moduleNames.entries())
     throw new Error(`Unexpected module output path outside of target directory: ${name}`);
 
   let [ast] = moduleIds.get(id);
-  let scopeManager = escope.analyze(ast);
+  let scopeManager = escope.analyze(ast, {ecmaVersion: 6});
   let scope = scopeManager.acquire(ast);
   if (scope.variables.length < 4 || scope.variables[0].name != "arguments")
     throw new Error("Unexpected module scope");
