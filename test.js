@@ -29,11 +29,19 @@ async function run()
       global,
       filepath,
       mocha);
-    mocha.suite.emit(
-      "require",
-      await import(filepath),
-      filepath,
-      mocha);
+    try
+    {
+      mocha.suite.emit(
+        "require",
+        await import(filepath),
+        filepath,
+        mocha);
+    }
+    catch (e)
+    {
+      console.error(`Failed loading ${filepath}:`);
+      console.error(e);
+    }
     mocha.suite.emit(
       "post-require",
       global,

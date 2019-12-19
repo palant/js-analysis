@@ -103,20 +103,18 @@ Calling `patterns.matches()` here will result in `{statement1: [Identifier], sta
 
 #### Placeholder modifiers
 
-The behavior of statement and expression placeholders can be altered via a number of modifiers. For example, the pattern `statement1;` will match both statements and declarations (default behavior), yet `statement1.strict;` will only match statements.
-
-*Note*: In some circumstances this syntax is invalid, e.g. in variable declarations. Alternatively, an underscore `_` can be used instead of the dot `.` to separate modifiers from the placeholder name, e.g. `statement1_strict_optional`.
+The behavior of statement and expression placeholders can be altered via a number of modifiers. For example, the pattern `statement1;` will match both statements and declarations (default behavior), yet `statement1_strict;` will only match statements.
 
 The available modifiers are:
 
-* `.optional` (*statements*, *expressions*): Allow `null` as placeholder value. This can be used for example with statement placeholders for example to denote that an `else` clause is optional or with expression placeholders to denote that a `return` statement doesn't have to return a value.
-* `.repeatable` (*statements*, *expressions*): Allow the statement or expression placeholder to consume multiple entries of an array, e.g. for statements in a function body or expressions in a sequence operator. The result for the placeholder will be an array of values. When combined with `.optional` modifier, the result might also be an empty array, meaning that none of the statements/expressions could be consumed.
-* `.strict` (*statements*, *expressions*): Enables strict matching. For statements this means that only statements and no declarations will be allowed. For expressions this means that only expressions and no identifiers or literals will be allowed.
-* `.declaration` (*statements*): Allow only function, variable and class declarations but no statements.
-* `.functionDeclaration` (*statements*): Allow only function declarations.
-* `.variableDeclaration` (*statements*): Allow only variable declarations.
-* `.classDeclaration` (*statements*): Allow only class declarations.
-* `.multiLine` (*statements*): Allow only statements that would normally be written on multiple lines, e.g. an `if` statement or a function declaration.
-* `.identifier` (*expressions*): Allow only identifiers.
-* `.literal` (*expressions*): Allow only literals.
-* `.orDeclaration` (*expressions*): Allow the expression to match variable declarations in addition to the expressions this placeholder would normally match. This is useful when matching `for` loops as the loop variable can be either an identifier or a variable declaration.
+* `_optional` (*statements*, *expressions*): Allow `null` as placeholder value. This can be used for example with statement placeholders for example to denote that an `else` clause is optional or with expression placeholders to denote that a `return` statement doesn't have to return a value.
+* `_repeatable` (*statements*, *expressions*): Allow the statement or expression placeholder to consume multiple entries of an array, e.g. for statements in a function body or expressions in a sequence operator. The result for the placeholder will be an array of values. When combined with `_optional` modifier, the result might also be an empty array, meaning that none of the statements/expressions could be consumed.
+* `_strict` (*statements*, *expressions*): Enables strict matching. For statements this means that only statements and no declarations will be allowed. For expressions this means that only expressions and no identifiers or literals will be allowed.
+* `_declaration` (*statements*): Allow only function, variable and class declarations but no statements.
+* `_functionDeclaration` (*statements*): Allow only function declarations.
+* `_variableDeclaration` (*statements*): Allow only variable declarations.
+* `_classDeclaration` (*statements*): Allow only class declarations.
+* `_multiLine` (*statements*): Allow only statements that would normally be written on multiple lines, e.g. an `if` statement or a function declaration.
+* `_identifier` (*expressions*): Allow only identifiers.
+* `_literal` (*expressions*): Allow only literals.
+* `_orDeclaration` (*expressions*): Allow the expression to match variable declarations in addition to the expressions this placeholder would normally match. This is useful when matching `for` loops as the loop variable can be either an identifier or a variable declaration.

@@ -18,8 +18,8 @@ import * as patterns from "./lib/patterns.js";
 import {renameVariable, beautifyVariables} from "./lib/renameVariables.js";
 import rewriteCode from "./lib/rewriteCode.js";
 
-const identifierPattern = patterns.compile("expression1.identifier");
-const literalPattern = patterns.compile("expression1.literal");
+const identifierPattern = patterns.compile("expression1_identifier");
+const literalPattern = patterns.compile("expression1_literal");
 
 function* objectIterator(node)
 {
@@ -81,18 +81,18 @@ let ast = readScript(commander.script);
 let placeholders = patterns.matches(`
   !function()
   {
-    statement1.repeatable.optional;
+    statement1_repeatable_optional;
   }()(expression1, expression2, expression3);
-  statement2.repeatable.optional;
+  statement2_repeatable_optional;
 `, ast);
 if (!placeholders)
 {
   placeholders = patterns.matches(`
     expression0 = function()
     {
-      statement1.repeatable.optional;
+      statement1_repeatable_optional;
     }()(expression1, expression2, expression3);
-    statement2.repeatable.optional;
+    statement2_repeatable_optional;
   `, ast);
 }
 if (!placeholders)
@@ -113,7 +113,7 @@ for (let [key, value] of objectIterator(modules))
 
 let moduleNames = new Map();
 
-placeholders = patterns.matches("[expression1.literal.repeatable.optional]", entry);
+placeholders = patterns.matches("[expression1_literal_repeatable_optional]", entry);
 if (!placeholders)
   throw new Error("Entry points are not an array");
 entry = placeholders.expression1;
@@ -196,7 +196,7 @@ for (let [id, name] of moduleNames.entries())
   let placeholders = patterns.matches(`
     (function(placeholder1, placeholder2, placeholder3)
     {
-      statement1.repeatable.optional;
+      statement1_repeatable_optional;
     })`, node);
   if (!placeholders)
     throw new Error("Module code doesn't have the expected format");

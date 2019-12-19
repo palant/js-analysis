@@ -50,16 +50,6 @@ describe("patterns.compile()", () =>
     expect(patterns.compile("statement12;").optional).to.be.false;
     expect(patterns.compile("statement12;").repeatable).to.be.false;
     expect(patterns.compile("statement12;").expectMultiLine).to.be.false;
-    expect(patterns.compile("statement12.optional;").optional).to.be.true;
-    expect(patterns.compile("statement12.repeatable;").repeatable).to.be.true;
-    expect(patterns.compile("statement12.multiLine;").expectMultiLine).to.be.true;
-  });
-
-  it("should process underscore-separated statement placeholder modifiers", () =>
-  {
-    expect(patterns.compile("statement12;").optional).to.be.false;
-    expect(patterns.compile("statement12;").repeatable).to.be.false;
-    expect(patterns.compile("statement12;").expectMultiLine).to.be.false;
     expect(patterns.compile("statement12_optional;").optional).to.be.true;
     expect(patterns.compile("statement12_repeatable;").repeatable).to.be.true;
     expect(patterns.compile("statement12_multiLine;").expectMultiLine).to.be.true;
@@ -67,7 +57,7 @@ describe("patterns.compile()", () =>
 
   it("should throw on unknown statement placeholder modifiers", () =>
   {
-    expect(() => patterns.compile("statement12.unknown;")).to.throw();
+    expect(() => patterns.compile("statement12_unknown;")).to.throw();
   });
 
   it("should recognize expression placeholders", () =>
@@ -80,16 +70,6 @@ describe("patterns.compile()", () =>
     expect(patterns.compile("expression3").optional).to.be.false;
     expect(patterns.compile("expression3").repeatable).to.be.false;
     expect(patterns.compile("expression3").allowDeclarations).to.be.false;
-    expect(patterns.compile("expression3.optional").optional).to.be.true;
-    expect(patterns.compile("expression3.repeatable").repeatable).to.be.true;
-    expect(patterns.compile("expression3.orDeclaration").allowDeclarations).to.be.true;
-  });
-
-  it("should process underscore-separated expression placeholder modifiers", () =>
-  {
-    expect(patterns.compile("expression3").optional).to.be.false;
-    expect(patterns.compile("expression3").repeatable).to.be.false;
-    expect(patterns.compile("expression3").allowDeclarations).to.be.false;
     expect(patterns.compile("expression3_optional").optional).to.be.true;
     expect(patterns.compile("expression3_repeatable").repeatable).to.be.true;
     expect(patterns.compile("expression3_orDeclaration").allowDeclarations).to.be.true;
@@ -97,7 +77,7 @@ describe("patterns.compile()", () =>
 
   it("should throw on unknown expression placeholder modifiers", () =>
   {
-    expect(() => patterns.compile("expression3.unknown")).to.throw();
+    expect(() => patterns.compile("expression3_unknown")).to.throw();
   });
 });
 
@@ -186,7 +166,7 @@ describe("pattern.matches()", () =>
         x = 2;
     `))).to.be.null;
 
-    expect(patterns.matches("if (x) statement1; else statement2.optional;", parseStatement(`
+    expect(patterns.matches("if (x) statement1; else statement2_optional;", parseStatement(`
       if (x)
         x = 2;
     `))).to.be.deep.equal({
@@ -202,7 +182,7 @@ describe("pattern.matches()", () =>
       }
     `))).to.be.null;
 
-    expect(patterns.matches("{ statement1.repeatable; }", parseStatement(`
+    expect(patterns.matches("{ statement1_repeatable; }", parseStatement(`
       {
         x = 2;
         y = 3;
@@ -228,7 +208,7 @@ describe("pattern.matches()", () =>
       statement3: parseStatement("x++;")
     });
 
-    expect(patterns.matches("{ statement1.variableDeclaration; statement2.functionDeclaration; statement3.classDeclaration; statement4.strict; }", parseStatement(`
+    expect(patterns.matches("{ statement1_variableDeclaration; statement2_functionDeclaration; statement3_classDeclaration; statement4_strict; }", parseStatement(`
       {
         var x = 1;
         function test() {}
@@ -242,7 +222,7 @@ describe("pattern.matches()", () =>
       statement4: parseStatement("x++;")
     });
 
-    expect(patterns.matches("{ statement1.declaration; statement2.declaration; statement3.declaration; statement4.strict; }", parseStatement(`
+    expect(patterns.matches("{ statement1_declaration; statement2_declaration; statement3_declaration; statement4_strict; }", parseStatement(`
       {
         var x = 1;
         function test() {}
@@ -256,46 +236,46 @@ describe("pattern.matches()", () =>
       statement4: parseStatement("x++;")
     });
 
-    expect(patterns.matches("statement1.strict;", parseStatement(`
+    expect(patterns.matches("statement1_strict;", parseStatement(`
       var x = 1;
     `))).to.be.null;
 
-    expect(patterns.matches("statement1.declaration;", parseStatement(`
+    expect(patterns.matches("statement1_declaration;", parseStatement(`
       x++;
     `))).to.be.null;
 
-    expect(patterns.matches("statement1.variableDeclaration;", parseStatement(`
+    expect(patterns.matches("statement1_variableDeclaration;", parseStatement(`
       class y {}
     `))).to.be.null;
 
-    expect(patterns.matches("statement1.functionDeclaration;", parseStatement(`
+    expect(patterns.matches("statement1_functionDeclaration;", parseStatement(`
       var x = 1;
     `))).to.be.null;
 
-    expect(patterns.matches("statement1.classDeclaration;", parseStatement(`
+    expect(patterns.matches("statement1_classDeclaration;", parseStatement(`
       function test() {}
     `))).to.be.null;
 
-    expect(patterns.matches("{ statement1.repeatable; }", parseStatement(`
+    expect(patterns.matches("{ statement1_repeatable; }", parseStatement(`
       {
       }
     `))).to.be.null;
 
-    expect(patterns.matches("{ statement1.repeatable.optional; }", parseStatement(`
+    expect(patterns.matches("{ statement1_repeatable_optional; }", parseStatement(`
       {
       }
     `))).to.be.deep.equal({
       statement1: []
     });
 
-    expect(patterns.matches("function sum(a,b){statement1.multiLine;}", parseStatement(`
+    expect(patterns.matches("function sum(a,b){statement1_multiLine;}", parseStatement(`
       function sum(a, b)
       {
         a = a + b;
       }
     `))).to.be.null;
 
-    expect(patterns.matches("function sum(a,b){statement1.multiLine;}", parseStatement(`
+    expect(patterns.matches("function sum(a,b){statement1_multiLine;}", parseStatement(`
       function sum(a, b)
       {
         if (a)
@@ -334,7 +314,7 @@ describe("pattern.matches()", () =>
       }
     `))).to.be.null;
 
-    expect(patterns.matches("function* test() {yield expression1.optional;}", parseStatement(`
+    expect(patterns.matches("function* test() {yield expression1_optional;}", parseStatement(`
       function* test()
       {
         yield;
@@ -347,7 +327,7 @@ describe("pattern.matches()", () =>
       x = 2, y = 3, x += y
     `).expression)).to.be.null;
 
-    expect(patterns.matches("expression1, expression2.repeatable", parseStatement(`
+    expect(patterns.matches("expression1, expression2_repeatable", parseStatement(`
       x = 2, y = 3, x += y
     `).expression)).to.be.deep.equal({
       expression1: parseStatement("x = 2").expression,
@@ -357,11 +337,11 @@ describe("pattern.matches()", () =>
       ]
     });
 
-    expect(patterns.matches("expression1, expression2, expression3.repeatable", parseStatement(`
+    expect(patterns.matches("expression1, expression2, expression3_repeatable", parseStatement(`
       x = 2, y = 3
     `).expression)).to.be.null;
 
-    expect(patterns.matches("expression1, expression2, expression3.repeatable.optional", parseStatement(`
+    expect(patterns.matches("expression1, expression2, expression3_repeatable_optional", parseStatement(`
       x = 2, y = 3
     `).expression)).to.be.deep.equal({
       expression1: parseStatement("x = 2").expression,
@@ -377,7 +357,7 @@ describe("pattern.matches()", () =>
       expression3: parseStatement("1").expression
     });
 
-    expect(patterns.matches("expression1.strict, expression2.identifier, expression3.literal", parseStatement(`
+    expect(patterns.matches("expression1_strict, expression2_identifier, expression3_literal", parseStatement(`
       x + 1, x, 1
     `).expression)).to.be.deep.equal({
       expression1: parseStatement("x + 1").expression,
@@ -385,15 +365,15 @@ describe("pattern.matches()", () =>
       expression3: parseStatement("1").expression
     });
 
-    expect(patterns.matches("expression1.identifier", parseStatement(`
+    expect(patterns.matches("expression1_identifier", parseStatement(`
       x + 1
     `).expression)).to.be.deep.null;
 
-    expect(patterns.matches("expression1.literal", parseStatement(`
+    expect(patterns.matches("expression1_literal", parseStatement(`
       x
     `).expression)).to.be.deep.null;
 
-    expect(patterns.matches("expression1.strict", parseStatement(`
+    expect(patterns.matches("expression1_strict", parseStatement(`
       1
     `).expression)).to.be.deep.null;
 
@@ -402,7 +382,7 @@ describe("pattern.matches()", () =>
         print();
     `))).to.be.null;
 
-    expect(patterns.matches("for (expression1.orDeclaration of expression2) print()", parseStatement(`
+    expect(patterns.matches("for (expression1_orDeclaration of expression2) print()", parseStatement(`
       for (let a of b)
         print();
     `))).to.be.deep.equal({
