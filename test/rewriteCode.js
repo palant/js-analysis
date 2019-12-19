@@ -309,6 +309,13 @@ describe("rewriteCode()", () =>
       var b = a(require("core"));
       var c = a(require("iterator"));
       function a(e){return e&&e.__esModule?e:{default:e}}
+      var y = x(require("messenger"));
+      function x(e){return e&&e.__esModule?e:{default:e}}
+      function test()
+      {
+        function innerA(e){return e&&e.__esModule?e:{default:e}}
+        var b = innerA(require("process"));
+      }
     `);
     rewriteCode(ast);
     expect(ast).to.be.deep.equal(esprima.parse(`
@@ -320,6 +327,25 @@ describe("rewriteCode()", () =>
           return obj;
         else
           return { default: obj };
+      }
+      var y = _interopRequireDefault2(require("messenger"));
+      function _interopRequireDefault2(obj)
+      {
+        if (obj && obj.__esModule)
+          return obj;
+        else
+          return { default: obj };
+      }
+      function test()
+      {
+        function _interopRequireDefault3(obj)
+        {
+          if (obj && obj.__esModule)
+            return obj;
+          else
+            return { default: obj };
+        }
+        var b = _interopRequireDefault3(require("process"));
       }
     `));
   });
