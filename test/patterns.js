@@ -55,6 +55,16 @@ describe("patterns.compile()", () =>
     expect(patterns.compile("statement12.multiLine;").expectMultiLine).to.be.true;
   });
 
+  it("should process underscore-separated statement placeholder modifiers", () =>
+  {
+    expect(patterns.compile("statement12;").optional).to.be.false;
+    expect(patterns.compile("statement12;").repeatable).to.be.false;
+    expect(patterns.compile("statement12;").expectMultiLine).to.be.false;
+    expect(patterns.compile("statement12_optional;").optional).to.be.true;
+    expect(patterns.compile("statement12_repeatable;").repeatable).to.be.true;
+    expect(patterns.compile("statement12_multiLine;").expectMultiLine).to.be.true;
+  });
+
   it("should throw on unknown statement placeholder modifiers", () =>
   {
     expect(() => patterns.compile("statement12.unknown;")).to.throw();
@@ -73,6 +83,16 @@ describe("patterns.compile()", () =>
     expect(patterns.compile("expression3.optional").optional).to.be.true;
     expect(patterns.compile("expression3.repeatable").repeatable).to.be.true;
     expect(patterns.compile("expression3.orDeclaration").allowDeclarations).to.be.true;
+  });
+
+  it("should process underscore-separated expression placeholder modifiers", () =>
+  {
+    expect(patterns.compile("expression3").optional).to.be.false;
+    expect(patterns.compile("expression3").repeatable).to.be.false;
+    expect(patterns.compile("expression3").allowDeclarations).to.be.false;
+    expect(patterns.compile("expression3_optional").optional).to.be.true;
+    expect(patterns.compile("expression3_repeatable").repeatable).to.be.true;
+    expect(patterns.compile("expression3_orDeclaration").allowDeclarations).to.be.true;
   });
 
   it("should throw on unknown expression placeholder modifiers", () =>

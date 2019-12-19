@@ -103,7 +103,11 @@ Calling `patterns.matches()` here will result in `{statement1: [Identifier], sta
 
 #### Placeholder modifiers
 
-The behavior of statement and expression placeholders can be altered via a number of modifiers. For example, the pattern `statement1;` will match both statements and declarations (default behavior), yet `statement1.strict;` will only match statements. The available modifiers are:
+The behavior of statement and expression placeholders can be altered via a number of modifiers. For example, the pattern `statement1;` will match both statements and declarations (default behavior), yet `statement1.strict;` will only match statements.
+
+*Note*: In some circumstances this syntax is invalid, e.g. in variable declarations. Alternatively, an underscore `_` can be used instead of the dot `.` to separate modifiers from the placeholder name, e.g. `statement1_strict_optional`.
+
+The available modifiers are:
 
 * `.optional` (*statements*, *expressions*): Allow `null` as placeholder value. This can be used for example with statement placeholders for example to denote that an `else` clause is optional or with expression placeholders to denote that a `return` statement doesn't have to return a value.
 * `.repeatable` (*statements*, *expressions*): Allow the statement or expression placeholder to consume multiple entries of an array, e.g. for statements in a function body or expressions in a sequence operator. The result for the placeholder will be an array of values. When combined with `.optional` modifier, the result might also be an empty array, meaning that none of the statements/expressions could be consumed.

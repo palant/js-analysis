@@ -30,10 +30,36 @@ describe("rewriteCode()", () =>
     expect(ast).to.be.deep.equal(esprima.parse(`
       function test()
       {
-        var x = false, y = undefined;
+        var x = false;
+        var y = undefined;
         if (x && !y)
           return true;
         return undefined;
+      }
+    `));
+  });
+
+  it("should limit variable declarations to one variable per line", () =>
+  {
+    let ast = esprima.parse(`
+      function test()
+      {
+        var x, y = 12, z, xyz = 3;
+        let a = 4, b, c = "x", abc = Math.sqrt(x + y);
+      }
+    `);
+    rewriteCode(ast);
+    expect(ast).to.be.deep.equal(esprima.parse(`
+      function test()
+      {
+        var x;
+        var y = 12;
+        var z;
+        var xyz = 3;
+        let a = 4;
+        let b;
+        let c = "x";
+        let abc = Math.sqrt(x + y);
       }
     `));
   });
