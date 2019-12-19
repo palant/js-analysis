@@ -228,28 +228,32 @@ describe("pattern.matches()", () =>
       statement3: parseStatement("x++;")
     });
 
-    expect(patterns.matches("{ statement1.variableDeclaration; statement2.functionDeclaration; statement3.strict; }", parseStatement(`
+    expect(patterns.matches("{ statement1.variableDeclaration; statement2.functionDeclaration; statement3.classDeclaration; statement4.strict; }", parseStatement(`
       {
         var x = 1;
         function test() {}
+        class y {}
         x++;
       }
     `))).to.be.deep.equal({
       statement1: parseStatement("var x = 1;"),
       statement2: parseStatement("function test() {}"),
-      statement3: parseStatement("x++;")
+      statement3: parseStatement("class y {}"),
+      statement4: parseStatement("x++;")
     });
 
-    expect(patterns.matches("{ statement1.declaration; statement2.declaration; statement3.strict; }", parseStatement(`
+    expect(patterns.matches("{ statement1.declaration; statement2.declaration; statement3.declaration; statement4.strict; }", parseStatement(`
       {
         var x = 1;
         function test() {}
+        class y {}
         x++;
       }
     `))).to.be.deep.equal({
       statement1: parseStatement("var x = 1;"),
       statement2: parseStatement("function test() {}"),
-      statement3: parseStatement("x++;")
+      statement3: parseStatement("class y {}"),
+      statement4: parseStatement("x++;")
     });
 
     expect(patterns.matches("statement1.strict;", parseStatement(`
@@ -261,11 +265,15 @@ describe("pattern.matches()", () =>
     `))).to.be.null;
 
     expect(patterns.matches("statement1.variableDeclaration;", parseStatement(`
-      function test() {}
+      class y {}
     `))).to.be.null;
 
     expect(patterns.matches("statement1.functionDeclaration;", parseStatement(`
       var x = 1;
+    `))).to.be.null;
+
+    expect(patterns.matches("statement1.classDeclaration;", parseStatement(`
+      function test() {}
     `))).to.be.null;
 
     expect(patterns.matches("{ statement1.repeatable; }", parseStatement(`

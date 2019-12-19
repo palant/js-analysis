@@ -68,7 +68,7 @@ Calling `patterns.matches()` here will result in `{placeholder1: "factorial", pl
 
 #### Statement placeholders
 
-Statement placeholders stand for a statement which by default also includes variable and function declarations. `statementNNN`, where `NNN` is some number, is considered to be a statement placeholder. An example pattern:
+Statement placeholders stand for a statement which by default also includes variable, function and class declarations. `statementNNN`, where `NNN` is some number, is considered to be a statement placeholder. An example pattern:
 
     if (x > 0)
       statement1;
@@ -112,9 +112,10 @@ The available modifiers are:
 * `.optional` (*statements*, *expressions*): Allow `null` as placeholder value. This can be used for example with statement placeholders for example to denote that an `else` clause is optional or with expression placeholders to denote that a `return` statement doesn't have to return a value.
 * `.repeatable` (*statements*, *expressions*): Allow the statement or expression placeholder to consume multiple entries of an array, e.g. for statements in a function body or expressions in a sequence operator. The result for the placeholder will be an array of values. When combined with `.optional` modifier, the result might also be an empty array, meaning that none of the statements/expressions could be consumed.
 * `.strict` (*statements*, *expressions*): Enables strict matching. For statements this means that only statements and no declarations will be allowed. For expressions this means that only expressions and no identifiers or literals will be allowed.
-* `.declaration` (*statements*): Allow only function or variable declarations but no statements.
+* `.declaration` (*statements*): Allow only function, variable and class declarations but no statements.
 * `.functionDeclaration` (*statements*): Allow only function declarations.
 * `.variableDeclaration` (*statements*): Allow only variable declarations.
+* `.classDeclaration` (*statements*): Allow only class declarations.
 * `.multiLine` (*statements*): Allow only statements that would normally be written on multiple lines, e.g. an `if` statement or a function declaration.
 * `.identifier` (*expressions*): Allow only identifiers.
 * `.literal` (*expressions*): Allow only literals.
