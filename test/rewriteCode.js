@@ -358,6 +358,7 @@ describe("rewriteCode()", () =>
       var a = require("core");
       var b = _interopRequireDefault(require("content/script-messenger"));
       const c = require("background/script-messenger");
+      const d = require("singleton").getInstance();
 
       b.postMessage(a, c.postMessage);
       function test()
@@ -370,6 +371,7 @@ describe("rewriteCode()", () =>
       var core = require("core");
       var scriptMessenger = _interopRequireDefault(require("content/script-messenger"));
       const scriptMessenger2 = require("background/script-messenger");
+      const singleton = require("singleton").getInstance();
 
       scriptMessenger.postMessage(core, scriptMessenger2.postMessage);
       function test()
