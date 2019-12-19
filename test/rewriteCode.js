@@ -315,12 +315,13 @@ describe("rewriteCode()", () =>
       {
         function innerA(e){return e&&e.__esModule?e:{default:e}}
         var b = innerA(require("process"));
+        var c = a(require("messenger"));
       }
     `);
     rewriteCode(ast);
     expect(ast).to.be.deep.equal(esprima.parse(`
-      var b = _interopRequireDefault(require("core"));
-      var c = _interopRequireDefault(require("iterator"));
+      var core = _interopRequireDefault(require("core"));
+      var iterator = _interopRequireDefault(require("iterator"));
       function _interopRequireDefault(obj)
       {
         if (obj && obj.__esModule)
@@ -346,6 +347,34 @@ describe("rewriteCode()", () =>
             return { default: obj };
         }
         var b = _interopRequireDefault3(require("process"));
+        var messenger = _interopRequireDefault(require("messenger"));
+      }
+    `));
+  });
+
+  it("should rename variables where appropriate", () =>
+  {
+    let ast = esprima.parse(`
+      var a = require("core");
+      var b = _interopRequireDefault(require("content/script-messenger"));
+      const c = require("background/script-messenger");
+
+      b.postMessage(a, c.postMessage);
+      function test()
+      {
+        b.onMessage(a, c.onMessage);
+      }
+    `);
+    rewriteCode(ast);
+    expect(ast).to.be.deep.equal(esprima.parse(`
+      var core = require("core");
+      var scriptMessenger = _interopRequireDefault(require("content/script-messenger"));
+      const scriptMessenger2 = require("background/script-messenger");
+
+      scriptMessenger.postMessage(core, scriptMessenger2.postMessage);
+      function test()
+      {
+        scriptMessenger.onMessage(core, scriptMessenger2.onMessage);
       }
     `));
   });
