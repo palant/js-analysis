@@ -73,7 +73,7 @@ describe("rewriteCode()", () =>
       x += y;
       function test(x, y)
       {
-        return x ? x + 1 : y - 2;
+        return x++, y -= 2, x += y, x ? x + 1 : y - 2;
       }
     `);
     rewriteCode(ast);
@@ -90,6 +90,9 @@ describe("rewriteCode()", () =>
       x += y;
       function test(x, y)
       {
+        x++;
+        y -= 2;
+        x += y;
         if (x)
           return x + 1;
         else
