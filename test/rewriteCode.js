@@ -359,7 +359,7 @@ describe("rewriteCode()", () =>
       var b = _interopRequireDefault(require("content/script-messenger"));
       const c = require("background/script-messenger");
       const d = require("singleton").getInstance();
-      var e = b.eventName;
+      var e = b.c.eventName;
       let f = d.type;
 
       b.postMessage(a, c.postMessage);
@@ -374,7 +374,7 @@ describe("rewriteCode()", () =>
       var scriptMessenger = _interopRequireDefault(require("content/script-messenger"));
       const scriptMessenger2 = require("background/script-messenger");
       const singleton = require("singleton").getInstance();
-      var eventName = scriptMessenger.eventName;
+      var eventName = scriptMessenger.c.eventName;
       let type = singleton.type;
 
       scriptMessenger.postMessage(core, scriptMessenger2.postMessage);
