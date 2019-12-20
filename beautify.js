@@ -23,7 +23,7 @@ function beautify(script, options)
   if (options.mods && options.code)
     rewriteCode(ast);
   if (options.mods && options.vars)
-    deduceVariableNames(node);
+    deduceVariableNames(ast);
   saveScript(ast, script);
 }
 

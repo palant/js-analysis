@@ -101,6 +101,19 @@ describe("rewriteCode()", () =>
     `));
   });
 
+  it("should leave variable declarations in for loops unchanged", () =>
+  {
+    let ast = esprima.parse(`
+      for (var i = 0, j = 0; i < a.length; i++, j++)
+        console.log(i, j);
+    `);
+    rewriteCode(ast);
+    expect(ast).to.be.deep.equal(esprima.parse(`
+      for (var i = 0, j = 0; i < a.length; i++, j++)
+        console.log(i, j);
+    `));
+  });
+
   it("should put brackets around multiline statements", () =>
   {
     let ast = esprima.parse(`
