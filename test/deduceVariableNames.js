@@ -20,7 +20,7 @@ describe("deduceVariableNames()", () =>
     let ast = esprima.parse(`
       var a = require("core");
       var b = _interopRequireDefault(require("content/script-messenger"));
-      const c = require("background/script-messenger");
+      const c = mangled("background/script-messenger");
       const d = require("singleton").getInstance();
 
       b.postMessage(a, c.postMessage);
@@ -33,7 +33,7 @@ describe("deduceVariableNames()", () =>
     expect(ast).to.be.deep.equal(esprima.parse(`
       var core = require("core");
       var scriptMessenger = _interopRequireDefault(require("content/script-messenger"));
-      const scriptMessenger2 = require("background/script-messenger");
+      const scriptMessenger2 = mangled("background/script-messenger");
       const singleton = require("singleton").getInstance();
 
       scriptMessenger.postMessage(core, scriptMessenger2.postMessage);
@@ -41,6 +41,23 @@ describe("deduceVariableNames()", () =>
       {
         scriptMessenger.onMessage(core, scriptMessenger2.onMessage);
       }
+    `));
+  });
+
+  it("should deduce variable names from call parameters", () =>
+  {
+    let ast = esprima.parse(`
+      var a = document.body.getAttribute("type");
+      var b = document.createEvent("MouseEvent");
+
+      document.forms[a].dispatchEvent(b);
+    `);
+    deduceVariableNames(ast);
+    expect(ast).to.be.deep.equal(esprima.parse(`
+      var type = document.body.getAttribute("type");
+      var MouseEvent = document.createEvent("MouseEvent");
+
+      document.forms[type].dispatchEvent(MouseEvent);
     `));
   });
 
