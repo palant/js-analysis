@@ -320,8 +320,8 @@ describe("rewriteCode()", () =>
     `);
     rewriteCode(ast);
     expect(ast).to.be.deep.equal(esprima.parse(`
-      var core = _interopRequireDefault(require("core"));
-      var iterator = _interopRequireDefault(require("iterator"));
+      var b = _interopRequireDefault(require("core"));
+      var c = _interopRequireDefault(require("iterator"));
       function _interopRequireDefault(obj)
       {
         if (obj && obj.__esModule)
@@ -347,40 +347,7 @@ describe("rewriteCode()", () =>
             return { default: obj };
         }
         var b = _interopRequireDefault3(require("process"));
-        var messenger = _interopRequireDefault(require("messenger"));
-      }
-    `));
-  });
-
-  it("should rename variables where appropriate", () =>
-  {
-    let ast = esprima.parse(`
-      var a = require("core");
-      var b = _interopRequireDefault(require("content/script-messenger"));
-      const c = require("background/script-messenger");
-      const d = require("singleton").getInstance();
-      var e = b.c.eventName;
-      let f = d.type;
-
-      b.postMessage(a, c.postMessage);
-      function test()
-      {
-        b.onMessage(a, c.onMessage);
-      }
-    `);
-    rewriteCode(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
-      var core = require("core");
-      var scriptMessenger = _interopRequireDefault(require("content/script-messenger"));
-      const scriptMessenger2 = require("background/script-messenger");
-      const singleton = require("singleton").getInstance();
-      var eventName = scriptMessenger.c.eventName;
-      let type = singleton.type;
-
-      scriptMessenger.postMessage(core, scriptMessenger2.postMessage);
-      function test()
-      {
-        scriptMessenger.onMessage(core, scriptMessenger2.onMessage);
+        var c = _interopRequireDefault(require("messenger"));
       }
     `));
   });

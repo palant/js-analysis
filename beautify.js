@@ -11,16 +11,19 @@
 import commander from "commander";
 
 import {readScript, saveScript} from "./lib/io.js";
-import {beautifyVariables} from "./lib/renameVariables.js";
+import generateVariableNames from "./lib/generateVariableNames.js";
 import rewriteCode from "./lib/rewriteCode.js";
+import deduceVariableNames from "./lib/deduceVariableNames.js";
 
 function beautify(script, options)
 {
   let ast = readScript(script);
   if (options.mods && options.vars)
-    beautifyVariables(ast);
+    generateVariableNames(ast);
   if (options.mods && options.code)
     rewriteCode(ast);
+  if (options.mods && options.vars)
+    deduceVariableNames(node);
   saveScript(ast, script);
 }
 

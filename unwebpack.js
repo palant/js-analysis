@@ -15,8 +15,10 @@ import escope from "escope";
 
 import {readScript, saveScript} from "./lib/io.js";
 import * as patterns from "./lib/patterns.js";
-import {renameVariable, beautifyVariables} from "./lib/renameVariables.js";
+import generateVariableNames from "./lib/generateVariableNames.js";
+import renameVariable from "./lib/renameVariable.js";
 import rewriteCode from "./lib/rewriteCode.js";
+import deduceVariableNames from "./lib/deduceVariableNames.js";
 
 const identifierPattern = patterns.compile("expression1_identifier");
 const literalPattern = patterns.compile("expression1_literal");
@@ -208,8 +210,10 @@ for (let [id, name] of moduleNames.entries())
   if (node.type == "BlockStatement")
     node.type = "Program";
   if (commander.mods && commander.vars)
-    beautifyVariables(node, scope);
+    generateVariableNames(node, scope);
   if (commander.mods && commander.code)
     rewriteCode(node);
+  if (commander.mods && commander.vars)
+    deduceVariableNames(node);
   saveScript(node, name);
 }

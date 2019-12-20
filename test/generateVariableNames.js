@@ -10,11 +10,11 @@ import chai from "chai";
 import esprima from "esprima";
 
 import * as patterns from "../lib/patterns.js";
-import {beautifyVariables} from "../lib/renameVariables.js";
+import generateVariableNames from "../lib/generateVariableNames.js";
 
 const {expect} = chai;
 
-describe("renameVariables.beautifyVariables()", () =>
+describe("generateVariableNames()", () =>
 {
   it("should give each variable a unique name", () =>
   {
@@ -39,7 +39,7 @@ describe("renameVariables.beautifyVariables()", () =>
       }
       a(5);
     `);
-    beautifyVariables(ast);
+    generateVariableNames(ast);
 
     let placeholders = patterns.matches(`
       placeholder1(0);
@@ -78,7 +78,7 @@ describe("renameVariables.beautifyVariables()", () =>
       }
       a(5);
     `);
-    beautifyVariables(ast);
+    generateVariableNames(ast);
 
     let placeholders = patterns.matches(`
       function placeholder1(placeholder2)
