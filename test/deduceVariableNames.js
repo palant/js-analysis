@@ -22,8 +22,6 @@ describe("deduceVariableNames()", () =>
       var b = _interopRequireDefault(require("content/script-messenger"));
       const c = require("background/script-messenger");
       const d = require("singleton").getInstance();
-      var e = b.c.eventName;
-      let f = d.type;
 
       b.postMessage(a, c.postMessage);
       function test()
@@ -37,14 +35,52 @@ describe("deduceVariableNames()", () =>
       var scriptMessenger = _interopRequireDefault(require("content/script-messenger"));
       const scriptMessenger2 = require("background/script-messenger");
       const singleton = require("singleton").getInstance();
-      var eventName = scriptMessenger.c.eventName;
-      let type = singleton.type;
 
       scriptMessenger.postMessage(core, scriptMessenger2.postMessage);
       function test()
       {
         scriptMessenger.onMessage(core, scriptMessenger2.onMessage);
       }
+    `));
+  });
+
+  it("should deduce variable names from property names", () =>
+  {
+    let ast = esprima.parse(`
+      var a = b.c.eventName;
+      let d = e.options;
+      const f = g.callback;
+
+      f(new Event(a, d));
+    `);
+    deduceVariableNames(ast);
+    expect(ast).to.be.deep.equal(esprima.parse(`
+      var eventName = b.c.eventName;
+      let options = e.options;
+      const callback = g.callback;
+
+      callback(new Event(eventName, options));
+    `));
+  });
+
+  it("should deduce variable names from class names", () =>
+  {
+    let ast = esprima.parse(`
+      var a = new WeakMap();
+      let b = new DOMParser(c, d);
+      const e = new Set([a, b]);
+      var f = new BOGUS();
+
+      e.set(f, b);
+    `);
+    deduceVariableNames(ast);
+    expect(ast).to.be.deep.equal(esprima.parse(`
+      var weakMap = new WeakMap();
+      let domparser = new DOMParser(c, d);
+      const set = new Set([weakMap, domparser]);
+      var f = new BOGUS();
+
+      set.set(f, domparser);
     `));
   });
 
