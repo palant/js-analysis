@@ -23,7 +23,8 @@ describe("rewriteCode()", () =>
         var x = !1, y = void 0;
         if (x && !y)
           return !0;
-        return void 0;
+        if (void 0)
+          return !1;
       }
     `);
     rewriteCode(ast);
@@ -34,7 +35,8 @@ describe("rewriteCode()", () =>
         var y = undefined;
         if (x && !y)
           return true;
-        return undefined;
+        if (undefined)
+          return false;
       }
     `));
   });
@@ -84,6 +86,12 @@ describe("rewriteCode()", () =>
       missing(y) ? doSomething(y) : doSomething(0),
       exists(z) || exists(y) && doSomething(x + y),
       x += y;
+      function test(x, y)
+      {
+        if (x)
+          return void (y += x);
+        y += 2;
+      }
     `);
     rewriteCode(ast);
     expect(ast).to.be.deep.equal(esprima.parse(`
@@ -97,6 +105,15 @@ describe("rewriteCode()", () =>
         if (exists(y))
           doSomething(x + y);
       x += y;
+      function test(x, y)
+      {
+        if (x)
+        {
+          y += x;
+          return;
+        }
+        y += 2;
+      }
     `));
   });
 
