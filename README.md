@@ -12,9 +12,17 @@ This tool will replace JavaScript files by well-formatted versions. It will also
 
 This tool can unpack some types of Webpack bundles, placing individual JavaScript modules into a directory. The modules will be beautified the way `beautify.js` would do it.
 
+## Beautification steps
+
+There are currently three modifications performed on the code by the tools. Depending on the command line flags some steps might be skipped.
+
+1. Give each variable a unique word-like name, performed by `lib/generateVariableNames.js`.
+2. Simplify various code constructs which are typically introduced by code minification, performed by `lib/rewriteCode.js`.
+3. Deduce names for some variables from their context, performed by `lib/deduceVariableNames.js`.
+
 ## Code rewriting approach
 
-These tools use [esprima](https://esprima.org/) to parse JavaScript into an Abstract Syntax Tree (AST). That tree is then modified based on various patterns and saved back as JavaScript code. Pattern processing functionality is implemented in `lib/patterns.js` library, the actual patterns applied can be found in `lib/rewriteCode.js`.
+These tools use [esprima](https://esprima.org/) to parse JavaScript into an Abstract Syntax Tree (AST). That tree is then modified based on various patterns and saved back as JavaScript code. Pattern processing functionality is implemented in `lib/patterns.js` library, the actual patterns applied can be found in `lib/rewriteCode.js` and `lib/deduceVariableNames.js`.
 
 A pattern is a piece of valid JavaScript code. It can contain a number of placeholders that will be considered when the pattern is matched against the AST or used to generate a new AST segment. Placeholders with the same name a required to have the same value for the pattern to match, placeholders with different names can have different values.
 
