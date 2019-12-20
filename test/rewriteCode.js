@@ -64,6 +64,19 @@ describe("rewriteCode()", () =>
     `));
   });
 
+  it("should leave variable declarations in for loops unchanged", () =>
+  {
+    let ast = esprima.parse(`
+      for (var i = 0, j = 0; i < a.length; i++, j++)
+        console.log(i, j);
+    `);
+    rewriteCode(ast);
+    expect(ast).to.be.deep.equal(esprima.parse(`
+      for (var i = 0, j = 0; i < a.length; i++, j++)
+        console.log(i, j);
+    `));
+  });
+
   it("should simplify control flow", () =>
   {
     let ast = esprima.parse(`
@@ -71,10 +84,6 @@ describe("rewriteCode()", () =>
       missing(y) ? doSomething(y) : doSomething(0),
       exists(z) || exists(y) && doSomething(x + y),
       x += y;
-      function test(x, y)
-      {
-        return x++, y -= 2, x += y, x ? x + 1 : y - 2;
-      }
     `);
     rewriteCode(ast);
     expect(ast).to.be.deep.equal(esprima.parse(`
@@ -88,6 +97,24 @@ describe("rewriteCode()", () =>
         if (exists(y))
           doSomething(x + y);
       x += y;
+    `));
+  });
+
+  it("should unroll sequence operators into proper statements", () =>
+  {
+    let ast = esprima.parse(`
+      function test(x, y)
+      {
+        return x++, y -= 2, x += y, x ? x + 1 : y - 2;
+      }
+
+      a = 2, b++, c(a, b) && (b = 0);
+
+      if (a && (b = a), c)
+        console.log(c);
+    `);
+    rewriteCode(ast);
+    expect(ast).to.be.deep.equal(esprima.parse(`
       function test(x, y)
       {
         x++;
@@ -98,19 +125,16 @@ describe("rewriteCode()", () =>
         else
           return y - 2;
       }
-    `));
-  });
 
-  it("should leave variable declarations in for loops unchanged", () =>
-  {
-    let ast = esprima.parse(`
-      for (var i = 0, j = 0; i < a.length; i++, j++)
-        console.log(i, j);
-    `);
-    rewriteCode(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
-      for (var i = 0, j = 0; i < a.length; i++, j++)
-        console.log(i, j);
+      a = 2;
+      b++;
+      if (c(a, b))
+        b = 0;
+
+      if (a)
+        b = a;
+      if (c)
+        console.log(c);
     `));
   });
 
