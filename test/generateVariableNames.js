@@ -7,10 +7,10 @@
 "use strict";
 
 import chai from "chai";
-import esprima from "esprima";
 
 import * as patterns from "../lib/patterns.js";
 import generateVariableNames from "../lib/generateVariableNames.js";
+import {parseScript} from "../lib/io.js";
 
 const {expect} = chai;
 
@@ -18,7 +18,7 @@ describe("generateVariableNames()", () =>
 {
   it("should give each variable a unique name", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       a(0);
       function a(a)
       {
@@ -71,7 +71,7 @@ describe("generateVariableNames()", () =>
 
   it("should not rename arguments variable", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       function a(b)
       {
         return arguments.length > 1 ? arguments[1] : b;

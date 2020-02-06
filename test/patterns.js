@@ -7,15 +7,15 @@
 "use strict";
 
 import chai from "chai";
-import esprima from "esprima";
 
+import {parseScript} from "../lib/io.js";
 import * as patterns from "../lib/patterns.js";
 
 const {expect} = chai;
 
 function parseStatement(code)
 {
-  return esprima.parse(code).body[0];
+  return parseScript(code).body[0];
 }
 
 describe("patterns.compile()", () =>

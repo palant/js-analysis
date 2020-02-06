@@ -7,9 +7,9 @@
 "use strict";
 
 import chai from "chai";
-import esprima from "esprima";
 
 import deduceVariableNames from "../lib/deduceVariableNames.js";
+import {parseScript} from "../lib/io.js";
 
 const {expect} = chai;
 
@@ -17,7 +17,7 @@ describe("deduceVariableNames()", () =>
 {
   it("should deduce module imports names", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       var a = require("core");
       var b = _interopRequireDefault(require("content/script-messenger"));
       const c = mangled("background/script-messenger");
@@ -30,7 +30,7 @@ describe("deduceVariableNames()", () =>
       }
     `);
     deduceVariableNames(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       var core = require("core");
       var scriptMessenger = _interopRequireDefault(require("content/script-messenger"));
       const scriptMessenger2 = mangled("background/script-messenger");
@@ -46,14 +46,14 @@ describe("deduceVariableNames()", () =>
 
   it("should deduce variable names from call parameters", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       var a = document.body.getAttribute("type");
       var b = document.createEvent("MouseEvent");
 
       document.forms[a].dispatchEvent(b);
     `);
     deduceVariableNames(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       var type = document.body.getAttribute("type");
       var MouseEvent = document.createEvent("MouseEvent");
 
@@ -63,7 +63,7 @@ describe("deduceVariableNames()", () =>
 
   it("should deduce variable names from property names", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       var a = b.c.eventName;
       let d = e.options;
       const f = g.callback;
@@ -71,7 +71,7 @@ describe("deduceVariableNames()", () =>
       f(new Event(a, d));
     `);
     deduceVariableNames(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       var eventName = b.c.eventName;
       let options = e.options;
       const callback = g.callback;
@@ -82,7 +82,7 @@ describe("deduceVariableNames()", () =>
 
   it("should deduce variable names from class names", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       var a = new WeakMap();
       let b = new DOMParser(c, d);
       const e = new Set([a, b]);
@@ -91,7 +91,7 @@ describe("deduceVariableNames()", () =>
       e.set(f, b);
     `);
     deduceVariableNames(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       var weakMap = new WeakMap();
       let domparser = new DOMParser(c, d);
       const set = new Set([weakMap, domparser]);
@@ -103,7 +103,7 @@ describe("deduceVariableNames()", () =>
 
   it("should rename loop variables", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       for (let i = 0; i < arguments.length; i++)
         for (let j = 0; j < arguments[i].length; j++)
           console.log(arguments[i][j]);
@@ -117,7 +117,7 @@ describe("deduceVariableNames()", () =>
       for (var i of arr);
     `);
     deduceVariableNames(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       for (let index = 0; index < arguments.length; index++)
         for (let index2 = 0; index2 < arguments[index].length; index2++)
           console.log(arguments[index][index2]);

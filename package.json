@@ -9,10 +9,10 @@
     "url": "git://github.com/palant/js-analysis.git"
   },
   "dependencies": {
+    "acorn": "^7.1.0",
     "commander": "^4.0.1",
     "escodegen": "^1.12.0",
     "escope": "^3.6.0",
-    "esprima": "^4.0.1",
     "estraverse": "^4.3.0",
     "phonetic": "^0.1.1"
   },

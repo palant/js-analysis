@@ -7,8 +7,8 @@
 "use strict";
 
 import chai from "chai";
-import esprima from "esprima";
 
+import {parseScript} from "../lib/io.js";
 import rewriteCode from "../lib/rewriteCode.js";
 
 const {expect} = chai;
@@ -17,7 +17,7 @@ describe("rewriteCode()", () =>
 {
   it("should simplify representation of constants", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       function test()
       {
         var x = !1, y = void 0;
@@ -28,7 +28,7 @@ describe("rewriteCode()", () =>
       }
     `);
     rewriteCode(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       function test()
       {
         var x = false;
@@ -43,7 +43,7 @@ describe("rewriteCode()", () =>
 
   it("should limit variable declarations to one variable per line", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       function test()
       {
         var x, y = 12, z, xyz = 3;
@@ -51,7 +51,7 @@ describe("rewriteCode()", () =>
       }
     `);
     rewriteCode(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       function test()
       {
         var x;
@@ -68,12 +68,12 @@ describe("rewriteCode()", () =>
 
   it("should leave variable declarations in for loops unchanged", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       for (var i = 0, j = 0; i < a.length; i++, j++)
         console.log(i, j);
     `);
     rewriteCode(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       for (var i = 0, j = 0; i < a.length; i++, j++)
         console.log(i, j);
     `));
@@ -81,7 +81,7 @@ describe("rewriteCode()", () =>
 
   it("should simplify control flow", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       exists(x) && doSomething(x),
       missing(y) ? doSomething(y) : doSomething(0),
       exists(z) || exists(y) && doSomething(x + y),
@@ -94,7 +94,7 @@ describe("rewriteCode()", () =>
       }
     `);
     rewriteCode(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       if (exists(x))
         doSomething(x);
       if (missing(y))
@@ -119,7 +119,7 @@ describe("rewriteCode()", () =>
 
   it("should unroll sequence operators into proper statements", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       function test(x, y)
       {
         return x++, y -= 2, x += y, x ? x + 1 : y - 2;
@@ -131,7 +131,7 @@ describe("rewriteCode()", () =>
         console.log(c);
     `);
     rewriteCode(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       function test(x, y)
       {
         x++;
@@ -157,7 +157,7 @@ describe("rewriteCode()", () =>
 
   it("should put brackets around multiline statements", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       if (x)
         for (y in x)
           console.log(y);
@@ -215,7 +215,7 @@ describe("rewriteCode()", () =>
         }
     `);
     rewriteCode(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       if (x)
       {
         for (y in x)
@@ -296,7 +296,7 @@ describe("rewriteCode()", () =>
 
   it("should leave single-line statements unchanged", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       function test()
       {
         if (x)
@@ -326,7 +326,7 @@ describe("rewriteCode()", () =>
       }
     `);
     rewriteCode(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       function test()
       {
         if (x)
@@ -359,7 +359,7 @@ describe("rewriteCode()", () =>
 
   it("should recognize known functions", () =>
   {
-    let ast = esprima.parse(`
+    let ast = parseScript(`
       var b = a(require("core"));
       var c = a(require("iterator"));
       function a(e){return e&&e.__esModule?e:{default:e}}
@@ -373,7 +373,7 @@ describe("rewriteCode()", () =>
       }
     `);
     rewriteCode(ast);
-    expect(ast).to.be.deep.equal(esprima.parse(`
+    expect(ast).to.be.deep.equal(parseScript(`
       var b = _interopRequireDefault(require("core"));
       var c = _interopRequireDefault(require("iterator"));
       function _interopRequireDefault(obj)
