@@ -6,12 +6,8 @@
 
 "use strict";
 
-import chai from "chai";
-
 import {parseScript} from "../lib/io.js";
 import * as patterns from "../lib/patterns.js";
-
-const {expect} = chai;
 
 function parseStatement(code)
 {

@@ -6,12 +6,8 @@
 
 "use strict";
 
-import chai from "chai";
-
 import {parseScript} from "../lib/io.js";
 import rewriteCode from "../lib/rewriteCode.js";
-
-const {expect} = chai;
 
 describe("rewriteCode()", () =>
 {

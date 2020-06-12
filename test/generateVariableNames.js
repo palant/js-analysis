@@ -6,13 +6,9 @@
 
 "use strict";
 
-import chai from "chai";
-
 import * as patterns from "../lib/patterns.js";
 import generateVariableNames from "../lib/generateVariableNames.js";
 import {parseScript} from "../lib/io.js";
-
-const {expect} = chai;
 
 describe("generateVariableNames()", () =>
 {

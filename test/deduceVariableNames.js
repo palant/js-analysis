@@ -6,12 +6,8 @@
 
 "use strict";
 
-import chai from "chai";
-
 import deduceVariableNames from "../lib/deduceVariableNames.js";
 import {parseScript} from "../lib/io.js";
-
-const {expect} = chai;
 
 describe("deduceVariableNames()", () =>
 {

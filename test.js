@@ -9,6 +9,7 @@
 import fs from "fs";
 import path from "path";
 
+import chai from "chai";
 import Mocha from "mocha";
 
 const mocha = new Mocha();
@@ -19,36 +20,12 @@ async function run()
   let dir = path.join(__dirname, "test");
   let files = fs.readdirSync(dir);
   for (let file of files)
-  {
-    if (!file.endsWith(".js"))
-      continue;
+    if (file.endsWith(".js"))
+      mocha.addFile(path.join(dir, file));
 
-    let filepath = path.join(dir, file);
-    mocha.suite.emit(
-      "pre-require",
-      global,
-      filepath,
-      mocha);
-    try
-    {
-      mocha.suite.emit(
-        "require",
-        await import(filepath),
-        filepath,
-        mocha);
-    }
-    catch (e)
-    {
-      console.error(`Failed loading ${filepath}:`);
-      console.error(e);
-    }
-    mocha.suite.emit(
-      "post-require",
-      global,
-      filepath,
-      mocha);
-  }
+  await mocha.loadFilesAsync();
 
+  global.expect = chai.expect;
   mocha.run(function(failures) {
     process.on("exit", function() {
       process.exit(failures > 0 ? 1 : 0);
