@@ -385,6 +385,17 @@ describe("pattern.matches()", () =>
       expression1: parseStatement("let a"),
       expression2: parseStatement("b").expression
     });
+
+    expect(patterns.matches("expression1(expression2_repeatable);", parseStatement(`
+      someFunction(a, b + 8, c());
+    `))).to.be.deep.equal({
+      expression1: parseStatement("someFunction").expression,
+      expression2: [
+        parseStatement("a").expression,
+        parseStatement("b + 8").expression,
+        parseStatement("c()").expression
+      ]
+    });
   });
 });
 
