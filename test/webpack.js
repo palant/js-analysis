@@ -211,7 +211,7 @@ describe("parseModules()", () =>
         function __webpack_require(moduleId){
           return module.exports;
         }
-        __webpack_require__(__webpack_require__.s = 0);
+        __webpack_require__.m=1,__webpack_require__.n=2,__webpack_require__(__webpack_require__.s = 0);
       }([
         function(m, e, r)
         {
