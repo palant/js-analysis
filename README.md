@@ -10,7 +10,7 @@ This tool will replace JavaScript files by well-formatted versions. It will also
 
 ## unwebpack.js
 
-This tool can unpack some types of Webpack bundles, placing individual JavaScript modules into a directory. The modules will be beautified the way `beautify.js` would do it.
+This tool can unpack some types of Browserify and Webpack bundles, placing individual JavaScript modules into a directory. The modules will be beautified the way `beautify.js` would do it.
 
 ## Beautification steps
 
