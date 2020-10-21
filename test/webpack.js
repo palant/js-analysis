@@ -295,4 +295,94 @@ describe("parseModules()", () =>
       module.exports = 42;
     `).body);
   });
+
+  it("should recognize optimized JSONP chunk entry point", () =>
+  {
+    let ast = parseScript(`
+      !function(modules){
+        function __webpack_require(moduleId){
+          return module.exports;
+        }
+        function init(){
+          __webpack_require__(__webpack_require__.s = foo[0]);
+        }
+        bar.push([
+          0,
+          1,
+          2
+        ]), init();
+      }([
+        function(m, e, r)
+        {
+          e.test = function()
+          {
+            return r(1);
+          };
+        },
+        function(m, e, r)
+        {
+          m.exports = 42;
+        }
+      ])`);
+
+    let modules = new Map();
+    for (let {name, node, scope} of parseModules(ast))
+      modules.set(name, node);
+
+    expect(modules.size).to.equal(2);
+
+    expect(modules.has("/main")).to.be.true;
+    expect(modules.get("/main").body).to.deep.equal(parseScript(`
+      exports.test = function()
+      {
+        return require(1);
+      };
+    `).body);
+
+    expect(modules.has("/1")).to.be.true;
+    expect(modules.get("/1").body).to.deep.equal(parseScript(`
+      module.exports = 42;
+    `).body);
+  });
+
+  it("should recognize JSONP chunks", () =>
+  {
+    let ast = parseScript(`
+      (window.webpackJsonp = window.webpackJsonp || []).push([
+        [123],
+        [
+          function(m, e, r)
+          {
+            e.test = function()
+            {
+              return r(2);
+            };
+          },
+          ,
+          function(m, e, r)
+          {
+            m.exports = 42;
+          }
+        ]
+      ]);`);
+
+    let modules = new Map();
+    for (let {name, node, scope} of parseModules(ast))
+      modules.set(name, node);
+
+    expect(modules.size).to.equal(2);
+
+    expect(modules.has("/0")).to.be.true;
+    expect(modules.get("/0").body).to.deep.equal(parseScript(`
+      exports.test = function()
+      {
+        return require(2);
+      };
+    `).body);
+
+    expect(modules.has("/2")).to.be.true;
+    expect(modules.get("/2").body).to.deep.equal(parseScript(`
+      module.exports = 42;
+    `).body);
+  });
 });
