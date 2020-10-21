@@ -127,4 +127,15 @@ describe("deduceVariableNames()", () =>
       for (var item of arr);
     `));
   });
+
+  it("should avoid using reserved words as variable names", () =>
+  {
+    let ast = parseScript(`
+      var a = require("core").default;
+    `);
+    deduceVariableNames(ast);
+    expect(ast).to.be.deep.equal(parseScript(`
+      var default2 = require("core").default;
+    `));
+  });
 });
