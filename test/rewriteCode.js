@@ -82,6 +82,7 @@ describe("rewriteCode()", () =>
       missing(y) ? doSomething(y) : doSomething(0),
       exists(z) || exists(y) && doSomething(x + y),
       x += y;
+      (0, mod.default)(12);
       function test(x, y)
       {
         if (x)
@@ -101,6 +102,7 @@ describe("rewriteCode()", () =>
         if (exists(y))
           doSomething(x + y);
       x += y;
+      mod.default(12);
       function test(x, y)
       {
         if (x)
