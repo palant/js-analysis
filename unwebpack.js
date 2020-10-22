@@ -17,7 +17,7 @@ import {readScript, saveScript} from "./lib/io.js";
 import generateVariableNames from "./lib/generateVariableNames.js";
 import rewriteCode from "./lib/rewriteCode.js";
 import deduceVariableNames from "./lib/deduceVariableNames.js";
-import {parseModules} from "./lib/webpack.js";
+import {parseModules} from "./lib/bundles.js";
 
 commander.arguments("<script> <target-dir>");
 commander.action((script, targetDir) =>

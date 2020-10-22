@@ -7,9 +7,9 @@
 "use strict";
 
 import {parseScript} from "../lib/io.js";
-import {parseModules} from "../lib/webpack.js";
+import {parseModules} from "../lib/bundles.js";
 
-describe("parseModules()", () =>
+describe("bundles.parseModules()", () =>
 {
   it("should recognize default Browserify format", () =>
   {
