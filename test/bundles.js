@@ -385,4 +385,46 @@ describe("bundles.parseModules()", () =>
       module.exports = 42;
     `).body);
   });
+
+  it("should recognize JSONP chunks with additional parameter", () =>
+  {
+    let ast = parseScript(`
+      (window.webpackJsonp = window.webpackJsonp || []).push([
+        ["abc", "cda"],
+        {
+          "abc": function(m, e, r)
+          {
+            e.test = function()
+            {
+              return r("123");
+            };
+          },
+          "123": function(m, e, r)
+          {
+            m.exports = 42;
+          }
+        },
+        [["xyz", "zyx"]]
+      ]);`);
+
+    let modules = new Map();
+    for (let {name, node, scope} of parseModules(ast))
+      modules.set(name, node);
+
+    expect(modules.size).to.equal(2);
+
+    console.log(modules);
+    expect(modules.has("/abc")).to.be.true;
+    expect(modules.get("/abc").body).to.deep.equal(parseScript(`
+      exports.test = function()
+      {
+        return require("123");
+      };
+    `).body);
+
+    expect(modules.has("/123")).to.be.true;
+    expect(modules.get("/123").body).to.deep.equal(parseScript(`
+      module.exports = 42;
+    `).body);
+  });
 });
