@@ -161,6 +161,55 @@ describe("bundles.parseModules()", () =>
     `).body);
   });
 
+  it("should recognize Browserify direct invocation assigning a global variable", () =>
+  {
+    let ast = parseScript(`
+      require = function e(t,r,n){
+        function o(a,s){
+        }
+        return o;
+      }({
+        1:[
+          function(r, m, e)
+          {
+            e.test = function()
+            {
+              return r("test");
+            };
+          },
+          {
+            "test": 2
+          }
+        ],
+        2: [
+          function(r, m, e)
+          {
+            m.exports = 42;
+          },
+          {}
+        ]
+      }, {}, [1]);`);
+
+    let modules = new Map();
+    for (let {name, node, scope} of parseModules(ast))
+      modules.set(name, node);
+
+    expect(modules.size).to.equal(2);
+
+    expect(modules.has("/main")).to.be.true;
+    expect(modules.get("/main").body).to.deep.equal(parseScript(`
+      exports.test = function()
+      {
+        return require("test");
+      };
+    `).body);
+
+    expect(modules.has("/test/")).to.be.true;
+    expect(modules.get("/test/").body).to.deep.equal(parseScript(`
+      module.exports = 42;
+    `).body);
+  });
+
   it("should recognize optimized Browserify format", () =>
   {
     let ast = parseScript(`
@@ -462,7 +511,6 @@ describe("bundles.parseModules()", () =>
 
     expect(modules.size).to.equal(2);
 
-    console.log(modules);
     expect(modules.has("/abc")).to.be.true;
     expect(modules.get("/abc").body).to.deep.equal(parseScript(`
       exports.test = function()
