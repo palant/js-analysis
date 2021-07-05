@@ -55,8 +55,8 @@ describe("bundles.parseModules()", () =>
       };
     `).body);
 
-    expect(modules.has("/test")).to.be.true;
-    expect(modules.get("/test").body).to.deep.equal(parseScript(`
+    expect(modules.has("/test/")).to.be.true;
+    expect(modules.get("/test/").body).to.deep.equal(parseScript(`
       module.exports = 42;
     `).body);
   });
@@ -106,8 +106,8 @@ describe("bundles.parseModules()", () =>
       };
     `).body);
 
-    expect(modules.has("/test")).to.be.true;
-    expect(modules.get("/test").body).to.deep.equal(parseScript(`
+    expect(modules.has("/test/")).to.be.true;
+    expect(modules.get("/test/").body).to.deep.equal(parseScript(`
       module.exports = 42;
     `).body);
   });
@@ -155,8 +155,8 @@ describe("bundles.parseModules()", () =>
       };
     `).body);
 
-    expect(modules.has("/test")).to.be.true;
-    expect(modules.get("/test").body).to.deep.equal(parseScript(`
+    expect(modules.has("/test/")).to.be.true;
+    expect(modules.get("/test/").body).to.deep.equal(parseScript(`
       module.exports = 42;
     `).body);
   });
@@ -205,8 +205,8 @@ describe("bundles.parseModules()", () =>
       };
     `).body);
 
-    expect(modules.has("/test")).to.be.true;
-    expect(modules.get("/test").body).to.deep.equal(parseScript(`
+    expect(modules.has("/test/")).to.be.true;
+    expect(modules.get("/test/").body).to.deep.equal(parseScript(`
       module.exports = 42;
     `).body);
   });

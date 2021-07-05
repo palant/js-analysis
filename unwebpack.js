@@ -39,6 +39,7 @@ if (typeof commander.script == "undefined" || typeof commander.targetDir == "und
 let modules = parseModules(readScript(commander.script));
 for (let {name, node, scope} of modules)
 {
+  name = name.replace(/\/$/, "/index.js");
   name = name.replace(/^\/+/, "");
   name = path.join(commander.targetDir, ...name.split("/"));
   if (!path.basename(name).includes("."))
