@@ -16,8 +16,10 @@ describe("generateVariableNames()", () =>
   {
     let ast = parseScript(`
       a(0);
+      var b = 5;
       function a(a)
       {
+        function b() {}
         if (a)
         {
           let a = 2;
@@ -33,33 +35,42 @@ describe("generateVariableNames()", () =>
         let a = 4;
         a++;
       }
-      a(5);
+      a(b);
     `);
     generateVariableNames(ast);
 
     let placeholders = patterns.matches(`
       placeholder1(0);
-      function placeholder1(placeholder2)
+      var placeholder2 = 5;
+      function placeholder1(placeholder3)
       {
-        if (placeholder2)
+        function placeholder4() {}
+        if (placeholder3)
         {
-          let placeholder3 = 2;
-          return placeholder3;
+          let placeholder5 = 2;
+          return placeholder5;
         }
         else
         {
-          let placeholder4 = 3;
-          return placeholder4;
+          let placeholder6 = 3;
+          return placeholder6;
         }
       }
       {
-        let placeholder5 = 4;
-        placeholder5++;
+        let placeholder7 = 4;
+        placeholder7++;
       }
-      placeholder1(5);
+      placeholder1(placeholder2);
     `, ast);
 
     expect(placeholders).to.be.not.null;
+
+    // Top-level names should stay unchanged
+    expect(placeholders.placeholder1).to.equal("a");
+    expect(placeholders.placeholder2).to.equal("b");
+    delete placeholders.placeholder1;
+    delete placeholders.placeholder2;
+
     expect(new Set(Object.values(placeholders)).size).to.be.equal(Object.values(placeholders).length);
     for (let name of Object.values(placeholders))
       expect(name).to.have.lengthOf.at.least(4);
@@ -85,8 +96,10 @@ describe("generateVariableNames()", () =>
     `, ast);
 
     expect(placeholders).to.be.not.null;
-    expect(placeholders.placeholder1).to.be.not.equal(placeholders.placeholder2);
-    for (let name of Object.values(placeholders))
-      expect(name).to.have.lengthOf.at.least(4);
+
+    // Top-level names should stay unchanged
+    expect(placeholders.placeholder1).to.equal("a");
+
+    expect(placeholders.placeholder2).to.have.lengthOf.at.least(4);
   });
 });
