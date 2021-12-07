@@ -344,6 +344,47 @@ describe("bundles.parseModules()", () =>
     `).body);
   });
 
+  it("should recognize eval'ed module contents", () =>
+  {
+    let ast = parseScript(`
+      !function(modules){
+        function __webpack_require(moduleId){
+          return module.exports;
+        }
+        __webpack_require__.m=1,__webpack_require__.n=2,__webpack_require__(__webpack_require__.s = 0);
+      }([
+        function(m, e, r)
+        {
+          eval("e.test = function()\\n{\\nreturn r(1);\\n};\\n");
+        },
+        function(m, e, r)
+        {
+          "use strict";
+          eval("m.exports = 42;");
+        }
+      ])`);
+
+    let modules = new Map();
+    for (let {name, node, scope} of parseModules(ast))
+      modules.set(name, node);
+
+    expect(modules.size).to.equal(2);
+
+    expect(modules.has("/main")).to.be.true;
+    expect(modules.get("/main").body).to.deep.equal(parseScript(`
+      exports.test = function()
+      {
+        return require(1);
+      };
+    `).body);
+
+    expect(modules.has("/1")).to.be.true;
+    expect(modules.get("/1").body).to.deep.equal(parseScript(`
+      "use strict";
+      module.exports = 42;
+    `).body);
+  });
+
   it("should recognize JSONP chunk entry point", () =>
   {
     let ast = parseScript(`
