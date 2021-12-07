@@ -260,6 +260,63 @@ describe("bundles.parseModules()", () =>
     `).body);
   });
 
+  it("should recognize Browserify's universal module output", () =>
+  {
+    let ast = parseScript(`
+      !function(t){
+        if ("object" == typeof exports && "undefined" != typeof module)
+          module.exports = t();
+        else if ("function" == typeof define && define.amd)
+          define([], t);
+        else
+          window.name = t();
+      }(function(){
+        var t;
+        return function e(t,r,n){
+          return 0;
+        }({
+          1:[
+            function(r, m, e)
+            {
+              e.test = function()
+              {
+                return r("test");
+              };
+            },
+            {
+              "test": 2
+            }
+          ],
+          2: [
+            function(r, m, e)
+            {
+              m.exports = 42;
+            },
+            {}
+          ]
+        }, {}, [1])(1);
+      });`);
+
+    let modules = new Map();
+    for (let {name, node, scope} of parseModules(ast))
+      modules.set(name, node);
+
+    expect(modules.size).to.equal(2);
+
+    expect(modules.has("/main")).to.be.true;
+    expect(modules.get("/main").body).to.deep.equal(parseScript(`
+      exports.test = function()
+      {
+        return require("test");
+      };
+    `).body);
+
+    expect(modules.has("/test/")).to.be.true;
+    expect(modules.get("/test/").body).to.deep.equal(parseScript(`
+      module.exports = 42;
+    `).body);
+  });
+
   it("should recognize default Webpack 4 format", () =>
   {
     let ast = parseScript(`
@@ -323,6 +380,61 @@ describe("bundles.parseModules()", () =>
           m.exports = 42;
         }
       ])`);
+
+    let modules = new Map();
+    for (let {name, node, scope} of parseModules(ast))
+      modules.set(name, node);
+
+    expect(modules.size).to.equal(2);
+
+    expect(modules.has("/main")).to.be.true;
+    expect(modules.get("/main").body).to.deep.equal(parseScript(`
+      exports.test = function()
+      {
+        return require(1);
+      };
+    `).body);
+
+    expect(modules.has("/1")).to.be.true;
+    expect(modules.get("/1").body).to.deep.equal(parseScript(`
+      module.exports = 42;
+    `).body);
+  });
+
+  it("should recognize Webpack's universal module output", () =>
+  {
+    let ast = parseScript(`
+      !function(global, generator){
+        if ("object" == typeof exports && "object" == typeof module)
+          module.exports = generator();
+        else if ("function" == typeof define && define.amd)
+          define([], generator);
+        else if ("object" == typeof exports)
+          exports.name = generator();
+        else
+          global.name = generator();
+      }(window, function()
+      {
+        return function(modules) {
+          function __webpack_require(moduleId){
+            return module.exports;
+          }
+          __webpack_require__.m=1,__webpack_require__.n=2;
+          return __webpack_require__(__webpack_require__.s = 0);
+        }([
+          function(m, e, r)
+          {
+            e.test = function()
+            {
+              return r(1);
+            };
+          },
+          function(m, e, r)
+          {
+            m.exports = 42;
+          }
+        ]).default;
+      });`);
 
     let modules = new Map();
     for (let {name, node, scope} of parseModules(ast))
