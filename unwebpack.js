@@ -10,7 +10,7 @@
 
 import path from "path";
 
-import commander from "commander";
+import {program} from "commander";
 import escope from "escope";
 
 import {readScript, saveScript} from "./lib/io.js";
@@ -19,41 +19,41 @@ import rewriteCode from "./lib/rewriteCode.js";
 import deduceVariableNames from "./lib/deduceVariableNames.js";
 import {parseModules} from "./lib/bundles.js";
 
-commander.arguments("<script> <target-dir>");
-commander.action((script, targetDir) =>
+program.arguments("<script> <target-dir>");
+program.action((script, targetDir) =>
 {
-  commander.script = script;
-  commander.targetDir = targetDir;
+  program.script = script;
+  program.targetDir = targetDir;
 });
-commander.option("-n, --no-mods", "Disable all modifications, reformat only");
-commander.option("-c, --no-code", "Disable code rewriting");
-commander.option("-v, --no-vars", "Disable variable name modification");
-commander.parse(process.argv);
+program.option("-n, --no-mods", "Disable all modifications, reformat only");
+program.option("-c, --no-code", "Disable code rewriting");
+program.option("-v, --no-vars", "Disable variable name modification");
+program.parse(process.argv);
 
-if (typeof commander.script == "undefined" || typeof commander.targetDir == "undefined")
+if (typeof program.script == "undefined" || typeof program.targetDir == "undefined")
 {
-  commander.outputHelp();
+  program.outputHelp();
   process.exit(1);
 }
 
-let modules = parseModules(readScript(commander.script));
+let modules = parseModules(readScript(program.script));
 for (let {name, node, scope} of modules)
 {
   name = name.replace(/\/$/, "/index.js");
   name = name.replace(/^\/+/, "");
-  name = path.join(commander.targetDir, ...name.split("/"));
+  name = path.join(program.targetDir, ...name.split("/"));
   if (!path.basename(name).includes("."))
     name += ".js";
-  if (path.relative(commander.targetDir, name).startsWith(".." + path.sep))
+  if (path.relative(program.targetDir, name).startsWith(".." + path.sep))
     throw new Error(`Unexpected module output path outside of target directory: ${name}`);
 
   if (node.type == "BlockStatement")
     node.type = "Program";
-  if (commander.mods && commander.vars)
+  if (program.mods && program.vars)
     generateVariableNames(node, scope);
-  if (commander.mods && commander.code)
+  if (program.mods && program.code)
     rewriteCode(node);
-  if (commander.mods && commander.vars)
+  if (program.mods && program.vars)
     deduceVariableNames(node);
   saveScript(node, name);
 }

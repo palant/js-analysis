@@ -8,7 +8,7 @@
 
 "use strict";
 
-import commander from "commander";
+import {program} from "commander";
 
 import {readScript, saveScript} from "./lib/io.js";
 import generateVariableNames from "./lib/generateVariableNames.js";
@@ -27,21 +27,21 @@ function beautify(script, options)
   saveScript(ast, script);
 }
 
-commander.arguments("<script> [script...]");
-commander.action((script, moreScripts) =>
+program.arguments("<script> [script...]");
+program.action((script, moreScripts) =>
 {
-  commander.scripts = [script].concat(moreScripts);
+  program.scripts = [script].concat(moreScripts);
 });
-commander.option("-n, --no-mods", "Disable all modifications, reformat only");
-commander.option("-c, --no-code", "Disable code rewriting");
-commander.option("-v, --no-vars", "Disable variable name modification");
-commander.parse(process.argv);
+program.option("-n, --no-mods", "Disable all modifications, reformat only");
+program.option("-c, --no-code", "Disable code rewriting");
+program.option("-v, --no-vars", "Disable variable name modification");
+program.parse(process.argv);
 
-if (typeof commander.scripts == "undefined")
+if (typeof program.scripts == "undefined")
 {
-  commander.outputHelp();
+  program.outputHelp();
   process.exit(1);
 }
 
-for (let script of commander.scripts)
-  beautify(script, commander.opts());
+for (let script of program.scripts)
+  beautify(script, program.opts());
