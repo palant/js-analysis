@@ -7,8 +7,22 @@
 "use strict";
 
 import * as patterns from "../lib/patterns.js";
-import generateVariableNames from "../lib/generateVariableNames.js";
+import generateVariableNames, {getName} from "../lib/generateVariableNames.js";
 import {parseScript} from "../lib/io.js";
+
+describe("getName()", () =>
+{
+  it("should generate unique names", () =>
+  {
+    const iterations = 200000;
+    let names = new Set();
+    let state = {};
+    for (let i = 0; i < iterations; i++)
+      names.add(getName(state));
+
+    expect(names.size).to.be.equal(iterations);
+  });
+});
 
 describe("generateVariableNames()", () =>
 {
