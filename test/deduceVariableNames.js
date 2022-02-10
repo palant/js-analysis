@@ -21,6 +21,7 @@ describe("deduceVariableNames()", () =>
         var b = _interopRequireDefault(require("content/script-messenger"));
         const c = mangled("background/script-messenger");
         const d = require("singleton").getInstance();
+        const e = require("1abc");
 
         b.postMessage(a, c.postMessage);
         function test()
@@ -38,6 +39,7 @@ describe("deduceVariableNames()", () =>
         var scriptMessenger = _interopRequireDefault(require("content/script-messenger"));
         const scriptMessenger2 = mangled("background/script-messenger");
         const singleton = require("singleton").getInstance();
+        const _1abc = require("1abc");
 
         scriptMessenger.postMessage(core, scriptMessenger2.postMessage);
         function test()
@@ -56,6 +58,7 @@ describe("deduceVariableNames()", () =>
       {
         var a = document.body.getAttribute("type");
         var b = document.createEvent("MouseEvent");
+        var c = document.querySelector(".88margin");
 
         document.forms[a].dispatchEvent(b);
       })();
@@ -67,6 +70,7 @@ describe("deduceVariableNames()", () =>
       {
         var type = document.body.getAttribute("type");
         var MouseEvent = document.createEvent("MouseEvent");
+        var _88margin = document.querySelector(".88margin");
 
         document.forms[type].dispatchEvent(MouseEvent);
       })();
