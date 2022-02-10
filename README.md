@@ -16,7 +16,7 @@ This tool can unpack some types of Browserify and Webpack bundles, placing indiv
 
 There are currently three modifications performed on the code by the tools. Depending on the command line flags some steps might be skipped.
 
-1. Give each variable a unique word-like name, performed by `lib/generateVariableNames.js`.
+1. Give each variable a unique name (a noun combined with a number of adjectives), performed by `lib/generateVariableNames.js`.
 2. Simplify various code constructs which are typically introduced by code minification, performed by `lib/rewriteCode.js`.
 3. Deduce names for some variables from their context, performed by `lib/deduceVariableNames.js`.
 
