@@ -11,7 +11,6 @@
 import path from "path";
 
 import {program} from "commander";
-import escope from "escope";
 
 import {readScript, saveScript} from "./lib/io.js";
 import generateVariableNames from "./lib/generateVariableNames.js";
@@ -35,6 +34,7 @@ if (typeof program.script == "undefined" || typeof program.targetDir == "undefin
   program.outputHelp();
   process.exit(1);
 }
+let options = program.opts();
 
 let modules = parseModules(readScript(program.script));
 for (let {name, node, scope} of modules)
@@ -49,11 +49,11 @@ for (let {name, node, scope} of modules)
 
   if (node.type == "BlockStatement")
     node.type = "Program";
-  if (program.mods && program.vars)
+  if (options.mods && options.vars)
     generateVariableNames(node, scope);
-  if (program.mods && program.code)
+  if (options.mods && options.code)
     rewriteCode(node);
-  if (program.mods && program.vars)
+  if (options.mods && options.vars)
     deduceVariableNames(node);
   saveScript(node, name);
 }
