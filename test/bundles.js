@@ -640,6 +640,7 @@ describe("bundles.parseModules()", () =>
   it("should recognize JSONP chunks with additional parameter", () =>
   {
     let ast = parseScript(`
+      "use strict";
       (window.webpackJsonp = window.webpackJsonp || []).push([
         ["abc", "cda"],
         {
