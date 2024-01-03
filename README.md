@@ -2,7 +2,7 @@
 
 **Warning**: This is a repository with quick-and-dirty code analysis tools which I use for my own research. The documentation is limited and support cannot be provided. Use at your own risk!
 
-At least NodeJS 13 is required to run these scripts. Run `npm install` in this directory to install required dependencies.
+At least NodeJS 14 is required to run these scripts. Run `npm install` in this directory to install required dependencies.
 
 ## beautify.js
 
