@@ -9,7 +9,7 @@
 import fs from "fs";
 import path from "path";
 
-import chai from "chai";
+import {expect} from "chai";
 import Mocha from "mocha";
 
 const mocha = new Mocha();
@@ -25,7 +25,7 @@ async function run()
 
   await mocha.loadFilesAsync();
 
-  global.expect = chai.expect;
+  global.expect = expect;
   mocha.run(function(failures) {
     process.on("exit", function() {
       process.exit(failures > 0 ? 1 : 0);

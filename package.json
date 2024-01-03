@@ -9,16 +9,16 @@
     "url": "git://github.com/palant/js-analysis.git"
   },
   "dependencies": {
-    "acorn": "^8.7.0",
-    "commander": "^9.0.0",
-    "escodegen": "^2.0.0",
-    "escope": "^3.6.0",
+    "acorn": "^8.11.3",
+    "commander": "^11.1.0",
+    "escodegen": "^2.1.0",
+    "escope": "^4.0.0",
     "estraverse": "^5.3.0"
   },
   "devDependencies": {
-    "chai": "^4.3.6",
-    "eslint": "^8.8.0",
-    "mocha": "^9.2.0"
+    "chai": "^5.0.0",
+    "eslint": "^8.56.0",
+    "mocha": "^10.2.0"
   },
   "scripts": {
     "test": "eslint beautify.js unwebpack.js lib test && node test.js"
