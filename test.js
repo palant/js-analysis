@@ -26,8 +26,10 @@ async function run()
   await mocha.loadFilesAsync();
 
   global.expect = expect;
-  mocha.run(function(failures) {
-    process.on("exit", function() {
+  mocha.run(function(failures)
+  {
+    process.on("exit", function()
+    {
       process.exit(failures > 0 ? 1 : 0);
     });
   });
